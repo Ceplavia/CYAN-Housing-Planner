@@ -2,6 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { createTestAIProvider, type ProviderRequest } from '../fixtures/ai-provider';
 import { readFile } from 'node:fs/promises';
 
+// Settings, three render outcomes, downloads and reload include software GPU work.
+test.describe.configure({ timeout: 360_000 });
+
 const providerURL = 'http://127.0.0.1:4199';
 let requests: ProviderRequest[] = [];
 const provider = createTestAIProvider(request => requests.push(request));

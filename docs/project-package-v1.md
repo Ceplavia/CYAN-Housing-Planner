@@ -23,17 +23,32 @@ Web elements can have a `details` object for shared item metadata. Explicit `nul
 
 The web stores a flat `projectPackage` extension on the imported project containing the latest native source, identity map and base64 attachment bytes. Local project JSON and full-library backups retain it. The next package export removes this extension from `web.json`, preventing recursive snapshots. Native storage keeps retained files under the session's `.openplan-package` directory. Retained original attachments may include files no longer shown by the receiving editor; both export interfaces disclose this.
 
+## Local custom models
+
+Static GLB import retains web `customModels` definitions, furniture `customModelId`
+references, provenance and SHA-256 metadata in `web.json`. Original GLB bytes live
+under `assets/` with the other retained attachments. The shared native furniture
+projection carries placement, angle, floor and footprint; native previews remain
+simplified. This does not introduce a new package version or native GLB renderer.
+
+The web bridge tests cover native-plan edits while retaining model references and
+source bytes. The dedicated simulator Swift import/edit/export test passed; a web test of its
+actual ZIP also passed for move, resize, rotation and floor changes. Native UI
+interaction and physical-device qualification remain open. Use the [model guide](local-custom-models.md) for import
+limits and the [verification record](reviews/2026-09-12-local-model-import.md) for
+current native-return evidence.
+
 ## Fidelity and editing limits
 
-Shared edits include wall endpoints, thickness and uniform height; door/window geometry and common styles/orientation; furniture placement, angle and footprint; floor names; room names/label positions/colors; plan notes and placed text; and the first floor's supported tracing image. Element mappings preserve identities across moves and IDs that are not native UUIDs. Unit conversion retains fractional dimensions.
+Shared edits include wall endpoints, thickness and uniform height; door/window geometry and common styles/orientation; furniture placement, angle, footprint and measured height; floor names; room names/label positions/colors; plan notes and placed text; and the shared floor's supported tracing image. Element mappings preserve identities across moves and IDs that are not native UUIDs. Unit conversion retains fractional dimensions.
 
 New web exports mark `baseline.json` with `openplanItemDetailsVersion: 1`. For legacy exports without that marker, the current native metadata overrides stale detail fields retained by older web clients. Unknown marker versions are rejected before persistence.
 
-Web returns compare the current native projection with its saved baseline and apply only changed shared properties to `web.json`. Unchanged web fields therefore survive, including floor elevations, curves, sloped wall heights, textures, stairs, columns, dimensions, groups, custom imagery, mirrored/scaled furniture and unknown extensions. A changed native wall height sets both endpoint heights on return. Furniture footprint changes account for existing web scale/mirroring. Unknown native materials/styles and other fields remain in the native source. Unchanged native defaults and pin-vs-styled-label choices remain unchanged on web return exports.
+Web returns compare the current native projection with its saved baseline and apply only changed shared properties to `web.json`. Unchanged web fields therefore survive, including floor elevations, curves, sloped wall heights, textures, stairs, columns, dimensions, groups, custom imagery, mirrored/scaled furniture and unknown extensions. A changed native wall height sets both endpoint heights on return. Furniture dimension changes account for existing web scale/mirroring on all three axes. Unknown native materials/styles and other fields remain in the native source. Unchanged native defaults and pin-vs-styled-label choices remain unchanged on web return exports.
 
 The catalogs and feature sets are not yet identical. iPhone displays straight, uniform-height walls and simplified furniture; it does not edit web floor elevations, wall curves/slopes, arbitrary web opening styles or web-only annotations. Unsupported furniture uses a basic web preview while retaining its original native category. Room labels without a detected enclosure remain preserved, though the web cannot draw an enclosed room fill for them. Photos, per-item notes, furniture/opening prices, room ceiling overrides/classification and wall construction materials are editable in the web Item details panel and on iPhone. Rooms can be selected from Layers, including retained native labels without a detected enclosure. Construction material and room ceiling metadata travel to iPhone; web wall colors, textures and endpoint heights remain separately editable. The import previews disclose these limits. Use the current web release to edit these fields; older releases retain them but do not provide their editing controls.
 
-Only one unrotated PNG/JPEG/GIF tracing image (the first web floor) is mapped to the native underlay. Other floor images, rotation, opacity and locking remain in the web source. Changed native placement/width updates the corresponding web image while preserving its presentation settings. Unsupported native image formats remain attached for iPhone without a web preview. Active web images must be embedded raster data; external/blob/SVG references are rejected before package import/export rather than fetched. No model or attachment is uploaded as part of exchange.
+One PNG/JPEG/GIF tracing image maps to the native underlay, including its rotation and optional floor ownership. A new web package selects the first floor; a retained package follows the existing owner, including after floor reordering or renumbering. The optional underlay `angle` is clockwise radians; omission means zero. Native preview rotates around the image center. Changed native placement, width or angle updates the corresponding web image; other floor images, opacity and locking remain in the web source. Older native clients may display the underlay without rotation while retaining its package data. Unsupported native image formats remain attached for iPhone without a web preview. Active web images must be embedded raster data; external/blob/SVG references are rejected before package import/export rather than fetched. No model or attachment is uploaded as part of exchange.
 
 ## Validation and persistence
 
@@ -60,6 +75,62 @@ Undo/redo retains at most 50 steps and approximately 32 MiB of serialized string
 Matching `native-project-package.zip` and `web-project-package.zip` fixtures live in both test suites. Native XCTest imports the real web package, edits it, and exports a `swift-return-project-package.zip` attachment. The web suite imports that actual Swift output and asserts both edits and retained web-only data. Additional tests cover unknown fields, attachments, deleted metadata, cross-floor moves, tracing placement, quota retry, cancellation, corrupt archives and independent copies. Browser CI covers desktop/390 px import, metadata edits, optimized/reused photos, undo/redo, item detachment and explicit file deletion, save/reload, ZIP and library exports, quota recovery, stale image decoding and 3D with no external network requests. `web-metadata-package.zip` is imported and edited in XCTest; the actual `swift-metadata-return.zip` verifies native edits and cleared metadata in the web suite.
 
 Simulator builds/tests validate code and local persistence. Physical-device Files/AirDrop delivery, LiDAR capture, and App Store/TestFlight distribution remain explicit release work in [issue #30](https://github.com/laanlabs/openPlan3D/issues/30). This format does not change upload quotas, Storage rules, billing configuration or native distribution status.
+
+## Furniture reflection
+
+The current development implementation adds optional boolean `mirrorX` and
+`mirrorY` fields to native furniture records. They reflect local width/depth axes
+before the stored angle is applied. Missing fields in standalone native plans
+mean no reflection. The native Mirror action toggles X without changing the
+angle, and duplication retains both flags. Native glyphs and SceneKit transforms
+apply the reflection; neutral mesh exports reverse face winding when needed.
+
+Web package export derives these flags from the signs of `scale.x` and `scale.y`.
+Native footprint dimensions already include the absolute web scale. On return,
+edited signs preserve web scale magnitudes and Z scale; footprint edits still
+divide out the retained magnitude. Reflection and resizing therefore compose
+without flattening the web scale or changing its physical size accidentally.
+
+When a returned package has a saved baseline, an omitted reflection flag inherits
+that baseline's value. This protects files saved by older native encoders that
+drop unknown fields. An explicit `false` removes reflection. New objects without
+a matching baseline use the standalone default. Non-boolean values are rejected.
+These optional fields do not change package format version 1.
+
+Standalone RoomPlan export carries reflection in its transform matrix. Import
+derives heading from local X and represents a negative planar determinant as a
+Y reflection. This preserves planar orientation, although the resulting angle
+and choice of reflected axis may differ from the original decomposition. Package
+returns preserve the independent stored angle and axis choices.
+
+Qualification is in progress: package, web RoomPlan, native reflection coding,
+RoomPlan round-trip and export-winding tests pass. Asymmetric-render and live
+UI verification are tracked in `NEXT.md`. These
+changes do not claim App Store release or physical-device qualification.
+
+## Furniture height
+
+Native furniture may carry an optional positive `height` in metres (maximum
+10,000). Native RoomPlan import retains the measured vertical dimension; saved
+plans, duplication, SceneKit preview, RoomPlan export and package merging retain
+it. Older native plans without height keep their category-default appearance.
+
+The web projection converts an explicit height to centimetres. Web package
+export includes absolute Z scale in the physical height. Native height edits on
+return divide out that retained scale, preserving independent web dimension and
+scale values. For example, 91 cm at Z scale 2.5 exports as 2.275 m; a native edit
+to 3.125 m returns as 125 cm with Z scale still 2.5. An omitted height in an older
+native return inherits the saved baseline, preventing unintended flattening.
+
+An unchanged standalone native record without height stays without height on
+re-export. Flat catalog symbols whose catalog height is zero omit the native
+height rather than emitting an invalid zero; their web definition remains in
+`web.json`. Native previews still use simplified category geometry for symbols.
+No package version change is required.
+
+Native focused tests and web package/category tests pass. Actual cross-platform
+UI/package height qualification and broader regression results remain tracked in
+NEXT and STATUS; the reflection qualification does not prove height qualification.
 
 ## Furniture category display contract
 
@@ -90,3 +161,30 @@ The shared `furniture-categories.json` fixtures and actual
 `swift-native-categories-return.zip`/`swift-web-categories-return.zip` outputs
 verify this contract. Package format version remains 1. Native 3D remains a
 simplified category-sized preview rather than the web's full model catalog.
+
+## Room boundaries and floor openings
+
+Native room records may include `boundaryWallIDs` (an array of native wall UUIDs)
+and `floorOpening` (an optional boolean). Web exports use existing wall mappings
+for the boundary references. Explicit boundaries take precedence over label-point
+matching, so nested rooms can share a label center without exchanging metadata.
+Unmatched explicit boundaries remain unassociated; old point-only labels use the
+smallest enclosing footprint. Both optional fields can be cleared on export.
+
+Native Codable documents and package merges retain these fields through edits.
+Web and native edited-plan 3D geometry honor the opening flag. Native Room
+Properties can edit it; native labels/statistics report zero usable area and
+canvas/SVG omit the marked room's fill. Native areas/fills use a raster seed
+inside an explicitly associated boundary, excluding nested faces, independently
+of the label position. Legacy labels without boundary IDs still use their center.
+These additive optional fields do not change package format version 1.
+
+### Optional tracing-image floor ownership
+
+`plan.underlay.level` is an optional integer floor index from -1000 through 1000.
+Omission retains legacy plan-wide native display. Newly imported native traces
+belong to the active floor; new web packages assign the shared image to its
+exported floor. Older clients may ignore this field and show the image globally.
+The native editor still supports one tracing image. Additional web floor images
+remain in `web.json`. Floor identity preserves ownership when web floors are
+reordered or renumbered; image-only owned floors are included on import.
