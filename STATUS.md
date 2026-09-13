@@ -1,6 +1,6 @@
 # OpenPlan3D status
 
-Last verified: **September 13, 2026, 00:20 EDT**.
+Last verified: **September 13, 2026, 12:50 EDT**.
 
 ## Work paused by user
 
@@ -15,6 +15,9 @@ not marked complete. No build, test, browser, or native QA job is running.
 The goal is not complete. Recent fixes are committed and pushed, but broader fidelity work,
 physical-device testing, and release/cloud gates remain open.
 
+Web PR #95 has merged into `main` as `4bdc00d`; its development branch was
+removed from the remote and local checkout.
+
 This is the concise, maintained status page. Update it as implementation,
 validation, blockers, or priorities change during the goal. Keep the full scope
 in [NEXT.md](NEXT.md); do not treat a focused test pass as completion of the goal.
@@ -26,12 +29,13 @@ Remote state was checked when preparing this report.
 
 | Repository | Branch | Latest implementation checkpoint | Delivery |
 | --- | --- | --- | --- |
-| Web app: `openPlan3D` | `codex/threejs-render-lab` | `5e09840` — phone status-bar scrollbar clearance | Committed and pushed; [PR #95](https://github.com/laanlabs/openPlan3D/pull/95) remains open |
+| Web app: `openPlan3D` | `main` | `4bdc00d` — merged PR #95, including interior area comparison | Committed, pushed and merged; [PR #95](https://github.com/laanlabs/openPlan3D/pull/95) is merged |
 | Native app: `openplan3d-ios` | `codex/local-floorplan-render` | `bdaad71` — area convention baseline | Committed and pushed |
 | Website: `openplan3d-www` | `main` | `4802b01` — WebP image delivery and CDN caching | Committed and pushed; local checkout matches remote `main` |
 
-All three working trees are clean and match their remotes at this pause. App work
-remains on development branches; it has not been merged into `main`. Pushing the
+All three working trees are clean and match their remotes at this pause. The web
+development branch was removed after merge. Native app work remains on its own
+development branch. Pushing the
 website changes does not, by itself, verify a production deployment.
 
 ## Work completed with scoped verification

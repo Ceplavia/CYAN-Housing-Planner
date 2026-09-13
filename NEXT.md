@@ -11,6 +11,15 @@ restored. All three repositories are committed, pushed and clean at this pause;
 no build, test, browser or native QA job is running. The overall goal remains
 active and all outstanding scope below remains open. Resume from [STATUS.md](STATUS.md).
 
+## September 13, 12:50 EDT — web branch merged and cleaned up
+
+Web PR #95 merged into `main` as `4bdc00d` after the required build, unit/type
+check, benchmarks and browser checks completed. The remote and local
+`codex/threejs-render-lab` branch were removed; the web checkout is clean on
+`main` and matches `origin/main`. The website checkout is also clean on `main`
+at `4802b01` and matches its remote. Native development remains on its own
+`codex/local-floorplan-render` branch. Work remains paused pending Asta 6 access.
+
 ## September 13, 00:14 EDT — interior area comparison implemented
 
 Area Summary now separately displays interior area (room polygons minus the
