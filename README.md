@@ -1,14 +1,10 @@
-# openplan3d
+# CYAN-Housing-Planner
 
 **Free Open Source 2D/3D Floor Plan Editor**
 
 Design floor plans in an intuitive 2D editor, then instantly preview them in a fully navigable 3D view — all in your browser. No account required, no server dependency; your projects stay on your device.
 
-**🌐 Try it live: [app.openplan3d.com](https://app.openplan3d.com/)**
-
-Maintainers: see [NEXT.md](NEXT.md) for the current backlog, verified baseline,
-iPhone release gates and Firebase cost constraints. The [capability reference](FEATURES.md)
-links implementation scope to regression coverage and records known limits.
+Based on the open-source [openplan3d](https://github.com/laanlabs/openPlan3D) project.
 
 <p align="center">
   <img src="plan1_2d.jpg" alt="2D Floor Plan View" width="48%">
@@ -50,6 +46,10 @@ links implementation scope to regression coverage and records known limits.
 - **Undo/Redo** — Full history with grouped operations
 - **Version history** — Auto-saved snapshots you can restore
 
+### 🌐 Multi-language
+- English, Português, 繁體中文（香港）
+- Language files live in [`src/lib/i18n/languages/`](src/lib/i18n/languages/) — drop in a new `<locale>.json` to add one; see [CONTRIBUTING.md](CONTRIBUTING.md#translations)
+
 ### 📤 Export
 - **SVG** — Scalable vector graphics
 - **DXF** — AutoCAD-compatible format
@@ -66,29 +66,14 @@ links implementation scope to regression coverage and records known limits.
 
 ---
 
-## 📱 Companion iOS App
-
-Scan a room with your iPhone and get an editable floor plan in seconds. The OpenPlan3D iOS app uses LiDAR (with an AR fallback for non-LiDAR devices) to build walls, doors, and windows as you walk, calculates room areas automatically, and shows the result in 2D and 3D — then hands the plan off to the web editor with one tap (see [iOS capture handoff](#-ios-capture-handoff)).
-
-<p align="center">
-  <img src="ios_home.png" alt="iOS app — scan a room, get a floor plan" width="24%">
-  <img src="ios_editor.png" alt="iOS app — edit walls, doors, and windows" width="24%">
-  <img src="ios_plan.png" alt="iOS app — room areas calculated" width="24%">
-  <img src="ios_3d.png" alt="iOS app — 3D view of the scanned space" width="24%">
-</p>
-
----
-
 ## 🚀 Getting Started
 
-The easiest way to try openplan3d is the hosted version at **[app.openplan3d.com](https://app.openplan3d.com/)** — no install needed.
-
-To run it locally, use Node.js 24 (see `.nvmrc`) and npm:
+Use Node.js 24 (see `.nvmrc`) and npm:
 
 ```bash
 # Clone the repository
-git clone https://github.com/laanlabs/openPlan3D.git
-cd openPlan3D
+git clone https://github.com/Ceplavia/CYAN-Housing-Planner.git
+cd CYAN-Housing-Planner
 
 # Install dependencies
 npm ci
@@ -100,7 +85,8 @@ npm run dev
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for fixture-based reports, focused checks
-and pull requests. Maintainers can use the [release checklist](docs/release-checklist.md).
+and pull requests. Maintainers can use the [release checklist](docs/release-checklist.md)
+and the [current backlog](NEXT.md).
 
 ### Development Checks
 
@@ -194,12 +180,6 @@ Please keep PRs focused and include screenshots for UI changes.
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
-
----
-
-<p align="center">
-  <b>Built with ❤️ for architects, designers, and anyone who needs a floor plan.</b>
-</p>
 
 ---
 
