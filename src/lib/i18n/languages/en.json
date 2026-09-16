@@ -1,4 +1,6 @@
-export const en = {
+{
+  "language.name": "English",
+  "language.intlLocale": "en",
   "settings.title": "Settings",
   "settings.close": "Close settings",
   "settings.tabProject": "Project",
@@ -1425,5 +1427,5 @@ export const en = {
   "customModelValidation.132": "Local furniture import does not support cameras yet. Export a static mesh.",
   "customModelValidation.attributeFormat": "Invalid GLB geometry: Unsupported format for {name}.",
   "customModelValidation.unsupportedExtension": "Unsupported GLB extension: {name} is not supported by local model import yet.",
-  "customModelValidation.undeclaredExtension": "Unsupported GLB extension: {name} is missing from extensionsUsed.",
-} as const;
+  "customModelValidation.undeclaredExtension": "Unsupported GLB extension: {name} is missing from extensionsUsed."
+}

@@ -1,17 +1,45 @@
 import { derived, writable } from 'svelte/store';
-import { en } from './locales/en';
-import { pt } from './locales/pt';
+import enMessages from './languages/en.json';
 
-export type Locale = 'en' | 'pt';
-export type TranslationKey = keyof typeof en;
-const dictionaries: Record<Locale, Record<TranslationKey, string>> = { en, pt };
+export type TranslationKey = keyof typeof enMessages;
+type Dictionary = Record<string, string>;
+
+// Every JSON file in languages/ becomes an available locale; the filename is the locale code.
+const languageFiles = import.meta.glob('./languages/*.json', { eager: true, import: 'default' });
+const dictionaries: Record<string, Dictionary> = {};
+for (const [path, messages] of Object.entries(languageFiles)) {
+  const code = /([^/\\]+)\.json$/.exec(path)?.[1];
+  if (code && messages) dictionaries[code] = messages as Dictionary;
+}
+
+export type Locale = string;
+export const availableLocales: Locale[] = Object.keys(dictionaries)
+  .sort((a, b) => (a === 'en' ? -1 : b === 'en' ? 1 : a.localeCompare(b)));
 const preference = writable<Locale>('en');
-const isLocale = (value: unknown): value is Locale => value === 'en' || value === 'pt';
+const isLocale = (value: unknown): value is Locale =>
+  typeof value === 'string' && Object.hasOwn(dictionaries, value);
 
 export function translate(language: Locale, key: TranslationKey, variables: Record<string, string | number> = {}): string {
+  // Missing keys fall back to English so new locales can be translated incrementally.
+  const template = dictionaries[language]?.[key] ?? enMessages[key];
   // Single-pass substitution preserves literal braces in user-provided values.
-  return dictionaries[language][key].replace(/\{(\w+)\}/g, (token, name) =>
+  return template.replace(/\{(\w+)\}/g, (token, name) =>
     Object.hasOwn(variables, name) ? String(variables[name]) : token);
+}
+
+/** Optional overlay lookup (e.g. `furniture.*` names) without English fallback. */
+export function lookup(language: Locale, key: string): string | undefined {
+  return dictionaries[language]?.[key];
+}
+
+/** Each file names itself via `language.name`; falls back to the locale code. */
+export function localeName(language: Locale): string {
+  return dictionaries[language]?.['language.name'] ?? language;
+}
+
+/** BCP-47 tag for Intl date/time APIs via `language.intlLocale`; falls back to the locale code. */
+export function intlLocale(language: Locale): string {
+  return dictionaries[language]?.['language.intlLocale'] ?? language;
 }
 
 export const locale = {

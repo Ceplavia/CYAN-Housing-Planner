@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t, locale, translate, type Locale } from '$lib/i18n';
+  import { t, locale, translate, intlLocale, type Locale } from '$lib/i18n';
   import { projectServiceMessage } from '$lib/i18n/projectServiceMessages';
   import { templateLabels } from '$lib/i18n/templateLabels';
   import { modalDialog } from '$lib/utils/modalDialog';
@@ -141,7 +141,7 @@
     if (diffHr < 24) return translate(language, 'library.hours', { count: diffHr });
     const diffDay = Math.floor(diffHr / 24);
     if (diffDay < 7) return translate(language, 'library.days', { count: diffDay });
-    return date.toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en');
+    return date.toLocaleDateString(intlLocale(language));
   }
 </script>
 

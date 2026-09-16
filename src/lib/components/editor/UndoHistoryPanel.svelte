@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte';
-  import { t, locale, type Locale } from '$lib/i18n';
+  import { t, locale, intlLocale, type Locale } from '$lib/i18n';
   import { undoMessage } from '$lib/i18n/undoMessages';
   import { undoHistoryStore, jumpToUndoStep } from '$lib/stores/project';
 
@@ -33,7 +33,7 @@
 
   function formatTime(ts: number, language: Locale) {
     const d = new Date(ts);
-    return d.toLocaleTimeString(language === 'pt' ? 'pt-BR' : 'en', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return d.toLocaleTimeString(intlLocale(language), { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
   async function handleClick(index: number) {

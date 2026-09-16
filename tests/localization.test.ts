@@ -1,8 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
-import { initializeLocale, locale, t, translate, type Locale } from '../src/lib/i18n';
-import { en } from '../src/lib/i18n/locales/en';
-import { pt } from '../src/lib/i18n/locales/pt';
+import { availableLocales, initializeLocale, locale, t, translate, type Locale } from '../src/lib/i18n';
+import en from '../src/lib/i18n/languages/en.json';
+
+// Every file in languages/ is a locale keyed by filename; furniture.* entries are
+// optional display-name overlays and need no English counterpart.
+const languageFiles = import.meta.glob('../src/lib/i18n/languages/*.json', { eager: true, import: 'default' }) as Record<string, Record<string, string>>;
+const dictionaries = Object.fromEntries(
+  Object.entries(languageFiles).map(([path, messages]) => [/([^/\\]+)\.json$/.exec(path)![1], messages]));
 
 afterEach(() => { vi.unstubAllGlobals(); locale.set('en'); });
 
@@ -12,11 +17,18 @@ describe('locale preferences', () => {
     expect(translate('pt', 'floors.default', { value: 125.5 })).toBe('Usar padrão (125.5 cm)');
     expect(translate('en', 'floors.default', { value: 125.5 })).toBe('Use default (125.5 cm)');
   });
-  it('keeps dictionary keys and substitution tokens in agreement', () => {
-    expect(Object.keys(pt).sort()).toEqual(Object.keys(en).sort());
-    for (const key of Object.keys(en) as (keyof typeof en)[]) {
-      expect(pt[key].trim()).not.toBe('');
-      expect(pt[key].match(/\{\w+\}/g) ?? []).toEqual(en[key].match(/\{\w+\}/g) ?? []);
+  it('keeps dictionary keys and substitution tokens in agreement across all language files', () => {
+    expect(Object.keys(dictionaries).sort()).toEqual([...availableLocales].sort());
+    const enKeys = Object.keys(en);
+    for (const [code, messages] of Object.entries(dictionaries)) {
+      for (const key of enKeys as (keyof typeof en)[]) {
+        const value = messages[key];
+        expect(value?.trim(), `${code} is missing "${key}"`).not.toBe('');
+        expect(value.match(/\{\w+\}/g) ?? [], `${code} "${key}"`).toEqual(en[key].match(/\{\w+\}/g) ?? []);
+      }
+      for (const key of Object.keys(messages)) {
+        expect(enKeys.includes(key) || key.startsWith('furniture.'), `${code} has unknown key "${key}"`).toBe(true);
+      }
     }
   });
   it('updates subscribed text, persists the choice and sets document language', () => {

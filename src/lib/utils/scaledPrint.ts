@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { translate, type Locale } from '$lib/i18n';
+import { intlLocale, translate, type Locale } from '$lib/i18n';
 import { get } from 'svelte/store';
 import type { Project } from '$lib/models/types';
 import { projectSettings, formatArea } from '$lib/stores/settings';
@@ -32,7 +32,7 @@ export function renderPrintPage(canvas: HTMLCanvasElement, project: Project, opt
   ctx.fillText(floor.name, 12, 22, pageWidth - 70);
   ctx.textAlign = 'right';
   ctx.fillText(translate(language, 'print.sheetScale', { value: options.scale === 'fit' ? translate(language, 'print.fit') : layout.scaleLabel }), pageWidth - 12, 16);
-  ctx.fillText(new Date().toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en'), pageWidth - 12, 22);
+  ctx.fillText(new Date().toLocaleDateString(intlLocale(language)), pageWidth - 12, 22);
   ctx.strokeStyle = '#cbd5e1';
   ctx.lineWidth = 0.25;
   ctx.strokeRect(area.x, area.y, area.width, area.height);

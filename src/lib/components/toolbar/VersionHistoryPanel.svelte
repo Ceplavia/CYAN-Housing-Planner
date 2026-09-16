@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t, locale, translate, type Locale } from '$lib/i18n';
+  import { t, locale, translate, intlLocale, type Locale } from '$lib/i18n';
   import { projectServiceMessage } from '$lib/i18n/projectServiceMessages';
   import { modalDialog } from '$lib/utils/modalDialog';
   import { onDestroy } from 'svelte';
@@ -23,7 +23,7 @@
     if (diff < 60) return translate(language, 'versions.now');
     if (diff < 3600) return translate(language, 'versions.minutes', { count: Math.floor(diff / 60) });
     if (diff < 86400) return translate(language, 'versions.hours', { count: Math.floor(diff / 3600) });
-    return d.toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en') + ' ' + d.toLocaleTimeString(language === 'pt' ? 'pt-BR' : 'en', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(intlLocale(language)) + ' ' + d.toLocaleTimeString(intlLocale(language), { hour: '2-digit', minute: '2-digit' });
   }
 
   async function onRestore(index: number, snapshot: Snapshot) {

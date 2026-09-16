@@ -40,6 +40,18 @@ requires otherwise. For performance changes, record the workload, hardware,
 measurement method and before/after result; a phone viewport is not a physical
 phone benchmark.
 
+## Translations
+
+Interface text lives in [src/lib/i18n/languages/](src/lib/i18n/languages/) — one
+`<locale>.json` per language, named by its locale code. To add a language, copy
+`en.json` to e.g. `fr.json` and translate the values; keep the `{token}` names and
+order intact. The file must define `language.name` (its native display name for the
+settings picker) and `language.intlLocale` (the BCP-47 tag used for date
+formatting). `furniture.*` entries are an optional display-name overlay for the
+furniture catalog — omitted items keep their English catalog name. The
+[localization test](tests/localization.test.ts) verifies every file covers the
+English keys with matching substitution tokens.
+
 ## Validation
 
 Run focused tests while developing, for example:
