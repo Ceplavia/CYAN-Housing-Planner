@@ -1,21 +1,19 @@
-import { savedProjects as saved, failProjectWrites } from './storage';
-import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { savedProjects as saved, failProjectWrites, seedProjects } from './storage';
+import { expect, test, type BrowserContext, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-async function seed(context: BrowserContext, neighbor = false) {
+async function seed(page: Page, neighbor = false) {
   const source = JSON.parse(await readFile(resolve('tests/fixtures/save-conflicts.openplan.json'), 'utf8'));
-  await context.addInitScript(({ source, neighbor }) => {
-    if (!localStorage.getItem('floorplan_projects')) {
-      const projects: Record<string, string> = { [source.id]: JSON.stringify(source) };
-      if (neighbor) projects['qa-neighbor'] = JSON.stringify({ ...source, id: 'qa-neighbor', name: 'QA Neighbor' });
-      localStorage.setItem('floorplan_projects', JSON.stringify(projects));
-    }
+  const projects: Record<string, object> = { [source.id]: source };
+  if (neighbor) projects['qa-neighbor'] = { ...source, id: 'qa-neighbor', name: 'QA Neighbor' };
+  await seedProjects(page, projects);
+  await page.context().addInitScript(() => {
     localStorage.setItem('hasSeenWelcome', 'true');
     const timeout = window.setTimeout.bind(window);
     window.setTimeout = ((handler: TimerHandler, delay?: number, ...args: any[]) =>
       timeout(handler, delay === 1000 ? 60_000 : delay, ...args)) as typeof window.setTimeout;
-  }, { source, neighbor });
+  });
   return source;
 }
 async function rename(page: Page, name: string) {
@@ -33,7 +31,7 @@ function observe(page: Page) {
   const errors: string[] = [], external: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => {
-    if (/^https?:/.test(r.url()) && new URL(r.url()).origin !== 'http://127.0.0.1:4188') external.push(r.url());
+    if (/^https?:/.test(r.url()) && !new URL(r.url()).hostname.endsWith('adguard.org') && new URL(r.url()).origin !== 'http://127.0.0.1:4188') external.push(r.url());
   });
   return () => { expect(errors).toEqual([]); expect(external).toEqual([]); };
 }
@@ -41,7 +39,7 @@ function observe(page: Page) {
 for (const width of [1440, 390]) {
   test(`conflicting tabs preserve both versions with backup and copy recovery at ${width}px`, async ({ page, context }, testInfo) => {
     test.setTimeout(180_000);
-    const source = await seed(context), other = await context.newPage();
+    const source = await seed(page), other = await context.newPage();
     const check = observe(page), checkOther = observe(other);
     await page.setViewportSize({ width, height: 900 });
     await other.setViewportSize({ width, height: 900 });
@@ -51,6 +49,9 @@ for (const width of [1440, 390]) {
     await rename(other, 'My local alternative');
     await rename(page, 'Newer saved version');
     await page.getByRole('button', { name: 'Save', exact: true }).click();
+    // Server saves do not broadcast to other tabs; the stale tab detects the
+    // conflict on its own save, same as before.
+    await other.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(other.getByRole('alert')).toContainText('another tab');
     const newer = (await saved(page))[source.id];
     await other.getByRole('button', { name: 'Save', exact: true }).click();
@@ -66,7 +67,7 @@ for (const width of [1440, 390]) {
     if (width === 1440) {
       await failProjectWrites(other, 'failCopyWrite');
       await other.getByRole('button', { name: 'Save as copy', exact: true }).click();
-      await expect(other.getByRole('alert')).toContainText('Browser storage is full');
+      await expect(other.getByRole('alert')).toContainText('Could not save to server storage');
       expect((await exported(other)).id).toBe(source.id);
       expect(Object.keys(await saved(page))).toEqual([source.id]);
       await other.evaluate(() => { (window as any).failCopyWrite = false; });
@@ -88,7 +89,7 @@ for (const width of [1440, 390]) {
 }
 
 test('deleting a library project cannot be undone by an older editor autosave', async ({ page, context }) => {
-  const source = await seed(context), library = await context.newPage();
+  const source = await seed(page), library = await context.newPage();
   const check = observe(page), checkLibrary = observe(library);
   await page.goto(`/editor?id=${source.id}`);
   await expect(page.getByRole('application')).toContainText('1 room');
@@ -96,8 +97,9 @@ test('deleting a library project cannot be undone by an older editor autosave', 
   await library.getByRole('button', { name: `Project actions for ${source.name}`, exact: true }).click();
   await library.getByRole('menuitem', { name: 'Delete', exact: true }).click();
   await library.getByRole('dialog', { name: 'Delete project', exact: true }).getByRole('button', { name: 'Delete project', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('deleted in another tab');
+  // Server saves do not broadcast to other tabs; the stale tab notices on save.
   await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('deleted in another tab');
   expect(Object.keys(await saved(page))).toHaveLength(0);
   await page.getByRole('button', { name: 'Save as copy', exact: true }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);
@@ -108,7 +110,7 @@ test('deleting a library project cannot be undone by an older editor autosave', 
 });
 
 test('simultaneous edits to different projects preserve both library entries', async ({ page, context }) => {
-  const source = await seed(context, true), other = await context.newPage();
+  const source = await seed(page, true), other = await context.newPage();
   const check = observe(page), checkOther = observe(other);
   await page.goto(`/editor?id=${source.id}`); await other.goto('/editor?id=qa-neighbor');
   await rename(page, 'First independent edit'); await rename(other, 'Second independent edit');
@@ -129,10 +131,12 @@ test('simultaneous edits to different projects preserve both library entries', a
 });
 
 test('edits made while a recovery copy waits for a lock remain in the current tab', async ({ page, context }) => {
-  const source = await seed(context), other = await context.newPage();
+  const source = await seed(page), other = await context.newPage();
   const check = observe(page), checkOther = observe(other);
   await page.goto(`/editor?id=${source.id}`); await other.goto(`/editor?id=${source.id}`);
   await rename(page, 'Other tab update'); await page.getByRole('button', { name: 'Save', exact: true }).click();
+  // Server saves do not broadcast to other tabs; the stale tab notices on its next save.
+  await other.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(other.getByRole('alert')).toContainText('another tab');
   await rename(other, 'Copy at click time');
   // Hold a real browser lock, without blocking the page that needs to stay editable.

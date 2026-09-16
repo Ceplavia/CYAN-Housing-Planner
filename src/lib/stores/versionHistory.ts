@@ -2,8 +2,7 @@ import { writable, get } from 'svelte/store';
 import { currentProject, loadProject } from './project';
 import { readProject } from '$lib/utils/projectValidation';
 import type { Project } from '$lib/models/types';
-import { readRecord, updateRecord } from '$lib/services/localDatabase';
-import { storageErrorMessage } from '$lib/services/datastore';
+import { projectStore, storageErrorMessage } from '$lib/services/datastore';
 import { readSnapshotStorage, writeSnapshotStorage } from '$lib/utils/snapshotStorage';
 
 export interface Snapshot {
@@ -31,12 +30,12 @@ function parseSnapshots(raw: string | null): Snapshot[] {
 }
 
 export async function getSnapshots(projectId: string): Promise<Snapshot[]> {
-  return parseSnapshots(await readRecord('history', projectId));
+  return parseSnapshots(await projectStore.getVersions(projectId));
 }
 
 /** Keep the raw history bytes available even if a snapshot cannot be opened. */
 export async function downloadSnapshotBackup(projectId: string) {
-  const raw = await readRecord('history', projectId);
+  const raw = await projectStore.getVersions(projectId);
   if (raw === null) throw new Error('No saved version history was found.');
   const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
   const link = document.createElement('a');
@@ -52,7 +51,7 @@ export async function saveSnapshot(project: Project, description: string) {
   // Freeze now: the editor may keep changing while storage is busy.
   const snapshot = { timestamp: Date.now(), description, data: JSON.stringify(project) };
   try {
-    await updateRecord('history', project.id, raw => {
+    await projectStore.updateVersions(project.id, raw => {
       const snapshots = parseSnapshots(raw);
       return writeSnapshotStorage([...snapshots, snapshot].slice(-MAX_SNAPSHOTS));
     });
@@ -88,7 +87,7 @@ export async function restoreSnapshot(projectId: string, index: number, expected
 }
 
 export async function deleteAllSnapshots(projectId: string) {
-  await updateRecord('history', projectId, () => null);
+  await projectStore.setVersions(projectId, null);
   writeErrors.delete(projectId);
   if (get(currentProject)?.id === projectId) await refreshSnapshots();
 }

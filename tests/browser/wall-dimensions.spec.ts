@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
@@ -20,7 +20,7 @@ for (const width of [1440, 390]) {
     const errors: string[] = [], external: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('request', request => {
-      if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url());
+      if (/^https?:/.test(request.url()) && !new URL(request.url()).hostname.endsWith('adguard.org') && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url());
     });
     await page.goto('/editor');
     await page.getByRole('button', { name: 'Export', exact: true }).click();

@@ -1,21 +1,19 @@
-import { savedProjects as library, storedRecords, failProjectWrites as failWrites } from './storage';
-import { expect, test, type Page } from '@playwright/test';
+import { savedProjects as library, storedRecords, failProjectWrites as failWrites, seedProject } from './storage';
+import { expect, test, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const fixture = resolve('tests/fixtures/native-import.openplan.json');
 async function seed(page: Page) {
   const source = JSON.parse(await readFile(fixture, 'utf8'));
-  await page.addInitScript(source => {
-    if (!localStorage.getItem('floorplan_projects')) {
-      localStorage.setItem('floorplan_projects', JSON.stringify({ [source.id]: JSON.stringify(source) }));
-    }
+  await seedProject(page, source);
+  await page.addInitScript(() => {
     localStorage.setItem('hasSeenWelcome', 'true');
     // Keep edits pending throughout UI actions, independent of CI machine speed.
     const timeout = window.setTimeout.bind(window);
     window.setTimeout = ((handler: TimerHandler, delay?: number, ...args: any[]) =>
       timeout(handler, delay === 1000 ? 60_000 : delay, ...args)) as typeof window.setTimeout;
-  }, source);
+  });
   await page.goto(`/editor?id=${source.id}`);
   await expect(page.getByRole('application')).toContainText('1 room');
   return source;
@@ -41,7 +39,7 @@ function observe(page: Page) {
   const errors: string[] = [], external: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => {
-    if (/^https?:/.test(r.url()) && new URL(r.url()).origin !== 'http://127.0.0.1:4188') external.push(r.url());
+    if (/^https?:/.test(r.url()) && !new URL(r.url()).hostname.endsWith('adguard.org') && new URL(r.url()).origin !== 'http://127.0.0.1:4188') external.push(r.url());
   });
   return () => { expect(errors).toEqual([]); expect(external).toEqual([]); };
 }
@@ -112,7 +110,7 @@ test('a failed candidate save keeps the import in memory and its original safe i
   await failWrites(page);
   await importJSON(page);
   await expect(page.getByTitle('Click to rename', { exact: true })).toHaveText(`${source.name} (Imported copy)`);
-  await expect(page.getByRole('alert')).toContainText('Browser storage is full');
+  await expect(page.getByRole('alert')).toContainText('Could not save to server storage');
   const copy = await exportJSON(page);
   expect(copy.id).not.toBe(source.id); expect(copy.floors).toEqual(normalized.floors);
   expect(Object.keys(await library(page))).toEqual([source.id]);

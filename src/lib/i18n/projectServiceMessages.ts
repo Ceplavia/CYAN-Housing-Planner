@@ -29,6 +29,8 @@ const keys: ServiceKey[] = [
   'projectService.backupSavedJSON', 'projectService.backupSavedUnreadable',
   'projectService.backupIdMismatch', 'projectService.backupHistoryLimit',
   'projectService.backupHistoryUnreadable', 'projectService.backupPreviewUnsupported',
+  'projectService.signInRequired', 'projectService.serverStorage',
+  'projectService.tooLarge', 'projectService.backupDownload',
 ];
 const messages = new Map(keys.map(key => [translate('en', key), key]));
 const packageKeys: ServiceKey[] = [
@@ -99,7 +101,9 @@ export function projectServiceMessage(message: string, language: Locale): string
   const detail = unsaved ? body.slice(prefix.length + 1) : body;
   const key = messages.get(detail);
   const repeatedKey = /^This backup repeats the key “([\s\S]*)”\. No projects were restored\.$/.exec(detail);
+  const limit = /^Project limit reached \((\d+)\/(\d+)\)\. Delete a saved plan first, or export it as JSON\.$/.exec(detail);
   const localized = key ? translate(language, key) : repeatedKey
-    ? translate(language, 'projectService.backupRepeatedKey', { key: repeatedKey[1] }) : countedMessage(detail, language);
+    ? translate(language, 'projectService.backupRepeatedKey', { key: repeatedKey[1] }) : limit
+    ? translate(language, 'projectService.limitReached', { used: limit[1], limit: limit[2] }) : countedMessage(detail, language);
   return `${unsaved ? `${translate(language, 'projectService.openUnsaved')} ` : ''}${localized}${suffix ? ` ${translate(language, suffix.key)}` : ''}`;
 }

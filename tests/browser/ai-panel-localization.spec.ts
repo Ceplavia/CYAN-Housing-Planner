@@ -1,10 +1,11 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('Portuguese AI choices preserve provider prompt values without sending an image', async ({ page }) => {
   test.slow();
   await page.addInitScript(() => localStorage.setItem('o3d_locale', 'pt'));
   const external: string[] = [];
   await page.route(/^https?:\/\//, route => {
+    if (new URL(route.request().url()).hostname.endsWith('adguard.org')) return route.abort();
     if (new URL(route.request().url()).origin !== 'http://127.0.0.1:4188') { external.push(route.request().url()); return route.abort(); }
     return route.continue();
   });

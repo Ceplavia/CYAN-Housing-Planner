@@ -5,6 +5,8 @@
   import { modalDialog } from '$lib/utils/modalDialog';
   import { prepareLibraryRestore, type LibraryRestorePreview, type RestoreResult } from '$lib/services/libraryRestore';
   import { storageErrorMessage } from '$lib/services/datastore';
+  import { restoreServerLibrary } from '$lib/services/serverStore';
+  import { sessionUser } from '$lib/services/session';
 
   let { onclose, onrestored }: { onclose: () => void; onrestored: () => Promise<void> } = $props();
   let input = $state<HTMLInputElement>();
@@ -39,7 +41,10 @@
     if (!preview || restoring || result) return;
     restoring = true; error = null;
     try {
-      const restored = await preview.restore(lifetime.signal);
+      // Signed-in libraries live on the server; it revalidates and commits atomically.
+      const restored = $sessionUser && source !== null
+        ? await restoreServerLibrary(source)
+        : await preview.restore(lifetime.signal);
       if (lifetime.signal.aborted) return;
       result = restored; // A later list refresh failure must not offer a duplicate restore.
       try { localStorage.setItem('hasSeenWelcome', 'true'); } catch {}

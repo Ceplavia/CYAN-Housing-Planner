@@ -4,6 +4,8 @@
   import { onDestroy } from 'svelte';
   import { modalDialog } from '$lib/utils/modalDialog';
   import { prepareProjectPackage } from '$lib/services/projectPackage';
+  import { restoreServerLibrary } from '$lib/services/serverStore';
+  import { sessionUser } from '$lib/services/session';
   import { storageErrorMessage } from '$lib/services/datastore';
   let { onclose, onimported }: { onclose: () => void; onimported: () => Promise<void> } = $props();
   let input = $state<HTMLInputElement>();
@@ -28,7 +30,15 @@
     if (!preview || importing || complete) return;
     importing = true; error = null;
     try {
-      await preview.restore(lifetime.signal);
+      // Signed-in libraries live on the server; it revalidates and commits atomically.
+      if ($sessionUser) {
+        await restoreServerLibrary(
+          JSON.stringify({ [preview.project.id]: JSON.stringify(preview.project) }),
+          'Imported copy',
+        );
+      } else {
+        await preview.restore(lifetime.signal);
+      }
       if (lifetime.signal.aborted) return;
       complete = true;
       try { localStorage.setItem('hasSeenWelcome', 'true'); } catch {}

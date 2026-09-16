@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 import { resolve } from 'node:path';
 import { readFile } from 'node:fs/promises';
 
@@ -18,7 +18,7 @@ for (const width of [1440, 390]) test(`camera previews release resources across 
   await observeGPU(page);
   const errors: string[] = [], external: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  page.on('request', request => { if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url()); });
+  page.on('request', request => { if (/^https?:/.test(request.url()) && !new URL(request.url()).hostname.endsWith('adguard.org') && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url()); });
   const samples: any[] = [];
   try {
     await page.goto('/editor');

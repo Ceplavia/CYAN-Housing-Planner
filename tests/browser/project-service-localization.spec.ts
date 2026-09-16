@@ -1,7 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { failProjectWrites, savedProjects, storedRecords } from './storage';
+import { failProjectWrites, savedProjects, seedProject, storedRecords } from './storage';
 
 const fixture = resolve('tests/fixtures/native-import.openplan.json');
 async function importJSON(page: Page) {
@@ -15,15 +15,15 @@ for (const width of [1440, 390]) {
   test(`Portuguese opening errors preserve pending work through language changes and recovery at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     const source = JSON.parse(await readFile(fixture, 'utf8'));
-    await page.addInitScript(source => {
+    await seedProject(page, source);
+    await page.addInitScript(() => {
       localStorage.setItem('o3d_locale', 'pt');
       localStorage.setItem('hasSeenWelcome', 'true');
-      localStorage.setItem('floorplan_projects', JSON.stringify({ [source.id]: JSON.stringify(source) }));
       // Keep the edit pending while using menus, as in project-opening.spec.ts.
       const timeout = window.setTimeout.bind(window);
       window.setTimeout = ((handler: TimerHandler, delay?: number, ...args: any[]) =>
         timeout(handler, delay === 1000 ? 60_000 : delay, ...args)) as typeof window.setTimeout;
-    }, source);
+    });
     await page.goto(`/editor?id=${source.id}`);
     await expect(page.getByRole('application')).toContainText('1 ambiente');
     await page.getByRole('button', { name: 'Exportar', exact: true }).click();
@@ -40,7 +40,7 @@ for (const width of [1440, 390]) {
     await importJSON(page);
     const opening = page.getByRole('alert').filter({ has: page.getByRole('button', { name: 'Fechar erro de importação', exact: true }) });
     await expect(opening).toContainText('Não foi possível salvar sua planta atual.');
-    await expect(opening).toContainText('O armazenamento do navegador está cheio.');
+    await expect(opening).toContainText('Não foi possível salvar no servidor.');
     await expect(opening).toContainText('Nenhum projeto foi importado.');
     await expect(opening).not.toContainText('Browser storage');
     expect(page.url()).toBe(originalURL);
@@ -53,7 +53,7 @@ for (const width of [1440, 390]) {
     // The native settings dialog makes background alerts inert, but their text
     // must still react to language changes without remounting the error.
     const englishOpening = page.locator('[role="alert"]').filter({ has: page.locator('button[aria-label="Dismiss import error"]') });
-    await expect(englishOpening).toContainText('Your current plan could not be saved. Browser storage is full.');
+    await expect(englishOpening).toContainText('Your current plan could not be saved. Could not save to server storage.');
     await expect(englishOpening).toContainText('No project was imported.');
     await page.getByRole('combobox', { name: 'Language', exact: true }).selectOption('pt');
     await page.getByRole('button', { name: 'Fechar configurações', exact: true }).click();
@@ -67,7 +67,7 @@ for (const width of [1440, 390]) {
     expect(await storedRecords(page)).toEqual(original);
     await page.getByRole('button', { name: 'Fechar erro de importação', exact: true }).click();
     const saveAlert = page.getByRole('alert');
-    await expect(saveAlert).toContainText('O armazenamento do navegador está cheio.');
+    await expect(saveAlert).toContainText('Não foi possível salvar no servidor.');
     const pending = page.waitForEvent('download');
     await saveAlert.getByRole('button', { name: 'Baixar backup JSON', exact: true }).click();
     const backup = JSON.parse(await readFile((await (await pending).path())!, 'utf8'));

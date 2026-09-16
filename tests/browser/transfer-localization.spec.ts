@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { failProjectWrites, savedProjects, storedRecords } from './storage';
 import { readPackageZip, writePackageZip } from '../../src/lib/utils/projectPackageZip';
@@ -159,7 +159,7 @@ for (const flow of [
     expect(original.equals(await readFile(flow.file))).toBe(true);
     await failProjectWrites(page);
     await dialog.getByRole('button', { name: flow.confirm, exact: true }).click();
-    await expect(dialog.getByRole('alert')).toContainText('O armazenamento do navegador está cheio.');
+    await expect(dialog.getByRole('alert')).toContainText('Não foi possível salvar no servidor.');
     await expect(dialog.getByRole('alert')).toContainText('Você pode tentar novamente.');
     await expect(dialog.getByRole('alert')).not.toContainText('Browser storage');
     expect(await storedRecords(page)).toEqual(before);

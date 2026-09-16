@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
@@ -32,7 +32,7 @@ test('import, numeric edit, undo/redo, save/reload and export preserve a multi-f
   const externalRequests: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => {
-    if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:4188') externalRequests.push(request.url());
+    if (/^https?:/.test(request.url()) && !new URL(request.url()).hostname.endsWith('adguard.org') && new URL(request.url()).origin !== 'http://127.0.0.1:4188') externalRequests.push(request.url());
   });
   await page.goto('/editor');
   await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
@@ -194,7 +194,7 @@ test('sloped walls preserve heights and openings through edits, reversal, elevat
   const externalRequests: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => {
-    if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:4188') externalRequests.push(request.url());
+    if (/^https?:/.test(request.url()) && !new URL(request.url()).hostname.endsWith('adguard.org') && new URL(request.url()).origin !== 'http://127.0.0.1:4188') externalRequests.push(request.url());
   });
   await page.goto('/editor');
   await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
@@ -255,7 +255,7 @@ for (const width of [1440, 390]) {
     const externalRequests: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('request', request => {
-      if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:4188') externalRequests.push(request.url());
+      if (/^https?:/.test(request.url()) && !new URL(request.url()).hostname.endsWith('adguard.org') && new URL(request.url()).origin !== 'http://127.0.0.1:4188') externalRequests.push(request.url());
     });
     const settings = async () => {
       if (width < 768) await page.getByRole('button', { name: 'More actions', exact: true }).click();

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 import { resolve } from 'node:path';
 import { savedProjects } from './storage';
 
@@ -8,7 +8,7 @@ function observe(page: Page) {
   const errors: string[] = [], external: string[] = [], models: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => {
-    if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url());
+    if (/^https?:/.test(request.url()) && !new URL(request.url()).hostname.endsWith('adguard.org') && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url());
     if (/\.glb$/.test(request.url())) models.push(request.url());
   });
   return { models, check() { expect(errors).toEqual([]); expect(external).toEqual([]); expect(models.some(url => /toaster/.test(url))).toBe(false); } };

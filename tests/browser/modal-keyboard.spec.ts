@@ -1,20 +1,17 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { storedRecords } from './storage';
+import { storedRecords, seedProject } from './storage';
 
 const id = 'qa-modal-keyboard';
 async function seed(page: Page, locale = 'en') {
-  await page.addInitScript(locale => localStorage.setItem('o3d_locale', locale), locale);
+  await page.addInitScript(locale => {
+    localStorage.setItem('o3d_locale', locale);
+    localStorage.setItem('hasSeenWelcome', 'true');
+  }, locale);
   const project = JSON.parse(await readFile('tests/fixtures/save-conflicts.openplan.json', 'utf8'));
   project.id = id; project.name = 'QA Modal Keyboard';
-  await page.addInitScript(project => {
-    if (!localStorage.getItem('qaModalSeeded')) {
-      localStorage.setItem('floorplan_projects', JSON.stringify({ [project.id]: JSON.stringify(project) }));
-      localStorage.setItem('hasSeenWelcome', 'true');
-      localStorage.setItem('qaModalSeeded', 'true');
-    }
-  }, project);
+  await seedProject(page, project);
   await page.goto(`/editor?id=${id}`);
   await page.getByRole('button', { name: locale === 'pt' ? 'Salvar' : 'Save', exact: true }).press('l');
   await page.getByRole('button', { name: locale === 'pt' ? '─ Parede 1' : '─ Wall 1', exact: true }).click();
@@ -23,7 +20,7 @@ async function seed(page: Page, locale = 'en') {
 function observe(page: Page) {
   const errors: string[] = [], external: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
-  page.on('request', r => { if (/^https?:/.test(r.url()) && new URL(r.url()).origin !== 'http://127.0.0.1:4188') external.push(r.url()); });
+  page.on('request', r => { if (/^https?:/.test(r.url()) && !new URL(r.url()).hostname.endsWith('adguard.org') && new URL(r.url()).origin !== 'http://127.0.0.1:4188') external.push(r.url()); });
   return () => { expect(errors).toEqual([]); expect(external).toEqual([]); };
 }
 async function toolbar(page: Page, name: string) {

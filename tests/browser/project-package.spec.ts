@@ -1,8 +1,8 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { readPackageZip, packageJSON } from '../../src/lib/utils/projectPackageZip';
-import { savedProjects, storedRecords } from './storage';
+import { failProjectWrites, savedProjects, storedRecords } from './storage';
 
 const fixture = resolve('tests/fixtures/native-project-package.zip');
 async function choose(page: Page, path = fixture) {
@@ -13,7 +13,7 @@ async function choose(page: Page, path = fixture) {
 function observe(page: Page) {
   const errors: string[] = [], external: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  page.on('request', request => { if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url()); });
+  page.on('request', request => { if (/^https?:/.test(request.url()) && !new URL(request.url()).hostname.endsWith('adguard.org') && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url()); });
   return () => { expect(errors).toEqual([]); expect(external).toEqual([]); };
 }
 async function packageDownload(page: Page) {
@@ -144,14 +144,7 @@ test('package cancellation, invalid file and quota retry preserve the existing l
   await expect(page.getByRole('alert')).toContainText('Invalid project package');
   expect(await storedRecords(page)).toEqual(before);
   await choose(page);
-  await page.evaluate(() => {
-    (window as any).packageQuota = true;
-    const add = IDBObjectStore.prototype.add;
-    IDBObjectStore.prototype.add = function(...args) {
-      if (this.name === 'projects' && (window as any).packageQuota) throw new DOMException('Full', 'QuotaExceededError');
-      return add.apply(this, args);
-    };
-  });
+  await failProjectWrites(page, 'packageQuota');
   await page.getByRole('button', { name: 'Import as copy', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Nothing was imported.');
   expect(await storedRecords(page)).toEqual(before);

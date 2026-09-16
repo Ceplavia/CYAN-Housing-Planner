@@ -1,9 +1,9 @@
-import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { expect, test, type Page, registerAccount, signIn } from './fixtures';
 import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { deploymentServer } from './deployment-server';
-import { failProjectWrites, savedProjects } from './storage';
+import { failProjectWrites, savedProjects, seedProject } from './storage';
 
 // WebKit's temporary contexts have no disk cache. Use a private, disposable
 // persistent profile for the cache regression, consistently in all engines.
@@ -13,22 +13,22 @@ const cacheTest = test.extend({
     const context = await playwright[browserName].launchPersistentContext(profile, {
       ...launchOptions, ...contextOptions, headless, viewport,
     });
-    try { await use(context); }
+    try {
+      await signIn(context, await registerAccount(playwright.request));
+      await use(context);
+    }
     finally { await context.close(); await rm(profile, { recursive: true, force: true }); }
   },
 });
 
-async function seed(context: BrowserContext, id: string) {
+async function seed(page: Page, id: string) {
   const project = JSON.parse(await readFile('tests/fixtures/save-conflicts.openplan.json', 'utf8'));
   project.id = id;
-  await context.addInitScript(project => {
-    // Seed only once; reload must use the app's saved IndexedDB revision.
-    if (!localStorage.getItem('qaDeploymentSeeded')) {
-      localStorage.setItem('floorplan_projects', JSON.stringify({ [project.id]: JSON.stringify(project) }));
-      localStorage.setItem('hasSeenWelcome', 'true');
-      localStorage.setItem('qaDeploymentSeeded', 'true');
-    }
-  }, project);
+  // Server-side seed: the stored revision survives every reload.
+  await seedProject(page, project);
+  await page.context().addInitScript(() => {
+    localStorage.setItem('hasSeenWelcome', 'true');
+  });
 }
 
 async function advanceCheck(page: Page) {
@@ -50,7 +50,7 @@ cacheTest('real cached validators cannot create a false update or hide a later d
   try {
     const errors: string[] = [];
     page.on('pageerror', e => errors.push(e.message));
-    await seed(context, 'qa-deployment-cache');
+    await seed(page, 'qa-deployment-cache');
     // Prime the fetch cache, not a JSON document navigation: engines can keep
     // those in separate cache entries. No Playwright routes or mocked fetches.
     server.serve(server.different);
@@ -119,7 +119,7 @@ cacheTest('real cached validators cannot create a false update or hide a later d
 for (const locale of ['en', 'pt']) test(`${locale}: update reload preserves failed saves, JSON recovery and the chosen destination`, async ({ page, context }) => {
   const server = await deploymentServer();
   try {
-    await seed(context, 'qa-deployment-save');
+    await seed(page, 'qa-deployment-save');
     await context.addInitScript(locale => localStorage.setItem('o3d_locale', locale), locale);
     await page.clock.install();
     await page.goto(`${server.url}/editor?id=qa-deployment-save`);
@@ -154,7 +154,7 @@ test('failed update requests remain quiet and retry after recovery', async ({ pa
   try {
     const errors: string[] = [];
     page.on('pageerror', e => errors.push(e.message));
-    await seed(context, 'qa-deployment-offline');
+    await seed(page, 'qa-deployment-offline');
     await page.clock.install();
     await page.goto(`${server.url}/editor?id=qa-deployment-offline`);
     await expect(page.getByRole('button', { name: /^(?:Save|Salvar)$/, exact: true })).toBeVisible();
@@ -168,7 +168,8 @@ test('failed update requests remain quiet and retry after recovery', async ({ pa
     await expect(page.getByRole('button', { name: 'Save and reload' })).toHaveCount(0);
     await rename(page, 'Still editable offline');
     await page.getByRole('button', { name: /^(?:Save|Salvar)$/, exact: true }).click();
-    await expect(page.getByText('Saved ✓', { exact: true })).toBeVisible();
+    // Offline saves cannot reach the server: the edit stays pending with an alert.
+    await expect(page.getByRole('alert')).toContainText('not saved');
     await context.setOffline(false);
     server.serve(server.different);
     await advanceCheck(page);

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { createTestAIProvider, type ProviderRequest } from '../fixtures/ai-provider';
 import { readFile } from 'node:fs/promises';
 
@@ -26,7 +26,10 @@ for (const width of [1440, 390]) {
     const errors: string[] = [], hostingPosts: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('request', request => {
-      if (request.method() === 'POST' && new URL(request.url()).origin === 'http://127.0.0.1:4188') hostingPosts.push(request.url());
+      // The app's own /api/* calls (autosave, sessions) are the self-hosted
+      // backend; "hosting requests" means POSTs to routes outside it.
+      const url = new URL(request.url());
+      if (request.method() === 'POST' && url.origin === 'http://127.0.0.1:4188' && !url.pathname.startsWith('/api/')) hostingPosts.push(request.url());
     });
     await page.goto('/editor');
     let dialog = await openSettings(page, width);

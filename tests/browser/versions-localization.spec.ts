@@ -1,16 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { readFile } from 'node:fs/promises';
-import { storedRecords } from './storage';
+import { storedRecords, seedProject, seedHistory } from './storage';
 
 test('Portuguese failed restore explains the unchanged plan and preserves recovery bytes', async ({ page }) => {
   const current = JSON.parse(await readFile('tests/fixtures/save-conflicts.openplan.json', 'utf8'));
   const other = { ...current, id: 'another-project', name: 'Must not replace current' };
   const history = JSON.stringify([{ timestamp: Date.now(), description: 'Wrong project {original}', data: JSON.stringify(other) }]);
-  await page.addInitScript(({ current, history }) => {
+  await seedProject(page, current);
+  await seedHistory(page, current.id, history);
+  await page.addInitScript(() => {
     localStorage.setItem('o3d_locale', 'pt');
-    localStorage.setItem('floorplan_projects', JSON.stringify({ [current.id]: JSON.stringify(current) }));
-    localStorage.setItem(`vh_${current.id}`, history);
-  }, { current, history });
+  });
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto(`/editor?id=${current.id}`);
   await page.getByRole('button', { name: /^(?:Export|Exportar)$/, exact: true }).click();
@@ -48,11 +48,11 @@ test('Portuguese failed restore explains the unchanged plan and preserves recove
 test('Portuguese damaged-history guidance preserves the recovery download', async ({ page }) => {
   const current = JSON.parse(await readFile('tests/fixtures/save-conflicts.openplan.json', 'utf8'));
   const history = '{original damaged history {name}';
-  await page.addInitScript(({ current, history }) => {
+  await seedProject(page, current);
+  await seedHistory(page, current.id, history);
+  await page.addInitScript(() => {
     localStorage.setItem('o3d_locale', 'pt');
-    localStorage.setItem('floorplan_projects', JSON.stringify({ [current.id]: JSON.stringify(current) }));
-    localStorage.setItem(`vh_${current.id}`, history);
-  }, { current, history });
+  });
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto(`/editor?id=${current.id}`);
   await page.getByRole('button', { name: /^(?:More actions|Mais ações)$/, exact: true }).click();
@@ -78,11 +78,11 @@ test('Portuguese history confirmations preserve cancellation and restore the sel
   prior.name = 'Minha versão anterior';
   prior.floors[0].walls[0].height = 321;
   const history = JSON.stringify([{ timestamp: Date.now(), description: 'Snapshot {original}', data: JSON.stringify(prior) }]);
-  await page.addInitScript(({ current, history }) => {
+  await seedProject(page, current);
+  await seedHistory(page, current.id, history);
+  await page.addInitScript(() => {
     localStorage.setItem('o3d_locale', 'pt');
-    localStorage.setItem('floorplan_projects', JSON.stringify({ [current.id]: JSON.stringify(current) }));
-    localStorage.setItem(`vh_${current.id}`, history);
-  }, { current, history });
+  });
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto(`/editor?id=${current.id}`);
   await page.getByRole('button', { name: /^(?:More actions|Mais ações)$/, exact: true }).click();

@@ -20,6 +20,9 @@ Thumbs.db
 .claude/
 .vscode/
 
+# Server-side SQLite storage (self-hosted)
+/data
+
 # Env
 .env
 .env.*

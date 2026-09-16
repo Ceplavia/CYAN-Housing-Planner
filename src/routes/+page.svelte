@@ -6,14 +6,18 @@
   import { onMount, onDestroy, tick } from 'svelte';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { localStore, storageErrorMessage, downloadLibraryBackup } from '$lib/services/datastore';
+  import { projectStore, storageErrorMessage, downloadActiveLibraryBackup } from '$lib/services/datastore';
   import { openProject } from '$lib/services/projectOpening';
   import { createDefaultProject } from '$lib/stores/project';
+  import { refreshSessionQuota, signOut } from '$lib/services/session';
   import WelcomeScreen from '$lib/components/WelcomeScreen.svelte';
   import LibraryRestoreDialog from '$lib/components/LibraryRestoreDialog.svelte';
   import ProjectPackageDialog from '$lib/components/ProjectPackageDialog.svelte';
   import ProjectActionsMenu from '$lib/components/ProjectActionsMenu.svelte';
   import { houseTemplates } from '$lib/utils/houseTemplates';
+
+  let { data } = $props();
+  const user = $derived(data.user ?? null);
 
   const openingLifetime = new AbortController();
   onDestroy(() => openingLifetime.abort());
@@ -40,16 +44,18 @@
   }
 
   async function backupLibrary() {
-    try { await downloadLibraryBackup(); }
+    try { await downloadActiveLibraryBackup(); }
     catch (error) { libraryError = storageErrorMessage(error); }
   }
 
   async function refreshProjects() {
+    if (!user) { loading = false; return; }
     loading = true;
     try {
-      projects = await localStore.list();
+      projects = await projectStore.list();
       projects.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-      thumbnails = await localStore.getThumbnails();
+      thumbnails = await projectStore.getThumbnails();
+      void refreshSessionQuota();
     } finally { loading = false; }
   }
 
@@ -61,6 +67,7 @@
   }
 
   onMount(() => {
+    if (!user) { loading = false; return; }
     void withLibraryError(async () => {
       await refreshProjects();
       const seen = localStorage.getItem('hasSeenWelcome');
@@ -87,7 +94,7 @@
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     duplicating = true;
     await withLibraryError(async () => {
-      const dup = await localStore.duplicate(id);
+      const dup = await projectStore.duplicate(id);
       if (!dup) throw new Error($t('library.gone'));
     });
     // Refresh errors must not turn a completed copy into a retryable mutation.
@@ -108,13 +115,13 @@
     if (!action || actionBusy || (action.type === 'rename' && !name)) return;
     actionBusy = true; actionError = null;
     try {
-      if (action.type === 'delete') await localStore.delete(action.id);
+      if (action.type === 'delete') await projectStore.delete(action.id);
       else {
-        const project = await localStore.load(action.id);
+        const project = await projectStore.load(action.id);
         if (!project) throw new Error($t('library.goneAction'));
         project.name = name;
         project.updatedAt = new Date();
-        await localStore.save(project);
+        await projectStore.save(project);
       }
     } catch (error) {
       actionError = storageErrorMessage(error);
@@ -158,29 +165,74 @@
     <div class="max-w-5xl mx-auto px-6 py-5 flex flex-wrap gap-4 items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold text-white">{$t('library.title')}</h1>
-        <p class="text-sm text-white/50 mt-0.5">{loading ? $t('library.loading') : $t(projects.length === 1 ? 'library.countOne' : 'library.countMany', { count: projects.length })}</p>
+        <p class="text-sm text-white/50 mt-0.5">{!user ? $t('auth.prompt') : loading ? $t('library.loading') : $t(projects.length === 1 ? 'library.countOne' : 'library.countMany', { count: projects.length })}</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
-        <button
-          onclick={() => showTemplateModal = true}
-          class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all flex items-center gap-2 border border-white/20"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          {$t('library.templates')}
-        </button>
-        <button
-          bind:this={newProjectButton}
-          onclick={newProject}
-          class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 flex items-center gap-2"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          {$t('library.new')}
-        </button>
+        {#if user}
+          <button
+            onclick={() => showTemplateModal = true}
+            class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all flex items-center gap-2 border border-white/20"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            {$t('library.templates')}
+          </button>
+          <button
+            bind:this={newProjectButton}
+            onclick={newProject}
+            class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 flex items-center gap-2"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {$t('library.new')}
+          </button>
+          <a
+            href={`${base}/account`}
+            class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all flex items-center gap-2 border border-white/20"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            {user.username}
+          </a>
+          <button
+            onclick={() => void signOut()}
+            class="px-4 py-2.5 bg-white/10 text-white/80 rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20"
+          >
+            {$t('auth.signOut')}
+          </button>
+        {:else}
+          <a
+            href={`${base}/login`}
+            class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20"
+          >
+            {$t('auth.signIn')}
+          </a>
+          <a
+            href={`${base}/register`}
+            class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40"
+          >
+            {$t('auth.signUp')}
+          </a>
+        {/if}
       </div>
     </div>
   </div>
 
   <div class="max-w-5xl mx-auto px-6 py-8">
+    {#if !user}
+      <div class="mx-auto max-w-md rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm mt-16">
+        <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-blue-500"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <p class="text-lg font-semibold text-gray-800">{$t('auth.welcomeTitle')}</p>
+        <p class="text-sm text-gray-500 mt-1">{$t('auth.welcomeSubtitle')}</p>
+        <div class="mt-6 flex items-center gap-3 justify-center">
+          <a href={`${base}/login`} class="px-5 py-2.5 bg-white text-gray-700 rounded-lg hover:bg-gray-100 font-semibold text-sm border border-gray-200">
+            {$t('auth.signIn')}
+          </a>
+          <a href={`${base}/register`} class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm">
+            {$t('auth.signUp')}
+          </a>
+        </div>
+      </div>
+    {:else}
     {#if duplicating}<p role="status" class="mb-4 text-sm text-gray-500">{$t('library.duplicating')}</p>{/if}
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500">
       <p>{$t('library.local')}</p>
@@ -251,6 +303,7 @@
           </div>
         {/each}
       </div>
+    {/if}
     {/if}
   </div>
 

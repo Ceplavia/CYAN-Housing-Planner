@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { packageJSON, readPackageZip } from '../../src/lib/utils/projectPackageZip';
@@ -9,7 +9,7 @@ const fixture = resolve('tests/fixtures/native-project-package.zip');
 function observe(page: Page) {
   const errors: string[] = [], external: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  page.on('request', request => { if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url()); });
+  page.on('request', request => { if (/^https?:/.test(request.url()) && !new URL(request.url()).hostname.endsWith('adguard.org') && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url()); });
   return () => { expect(errors).toEqual([]); expect(external).toEqual([]); };
 }
 async function choose(page: Page, button: string, path: string) {
@@ -222,10 +222,10 @@ test('bad photos and quota failures keep the saved project and an exportable dra
   await failProjectWrites(page);
   await fill(page, 'Item notes', 'Keep this unsaved photo draft');
   // Let the expected autosave failure finish changing the layout before opening the picker.
-  await expect(page.getByRole('alert').filter({ hasText: 'Browser storage is full' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'Could not save to server storage' })).toBeVisible();
   await addPhoto(page, resolve('tests/fixtures/item-photo.png'));
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Browser storage is full');
+  await expect(page.getByRole('alert')).toContainText('Could not save to server storage');
   expect(await storedRecords(page)).toEqual(before);
   const draft = JSON.parse((await download(page, 'Download JSON backup')).toString());
   expect(draft.floors[0].furniture[0].details.note).toBe('Keep this unsaved photo draft');

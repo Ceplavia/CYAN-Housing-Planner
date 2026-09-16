@@ -69,6 +69,12 @@ disables analytics/cloud uploads. Rebuild after code changes before browser test
 do not start a second server on that port. Engine names are `chromium`, `firefox`
 and `webkit`. See [playwright.config.ts](playwright.config.ts) for current settings.
 
+Browser specs sign in through [tests/browser/fixtures.ts](tests/browser/fixtures.ts):
+the shared `test` registers a fresh account per test and `tests/browser/storage.ts`
+seeds and inspects projects through the `/api` endpoints — never write
+`localStorage` project keys in specs. Specs that build their own browser context
+must call `signIn(context, api)` from that file first.
+
 Before review, report the checks appropriate to the change and any failures,
 skips or untested environments. Documentation-only changes normally need link
 and diff checks rather than a repeated application suite. CI runs the broader

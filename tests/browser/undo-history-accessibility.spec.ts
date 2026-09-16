@@ -1,15 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { readFile } from 'node:fs/promises';
+import { seedProject } from './storage';
 
 for (const width of [1440, 390]) for (const language of ['en', 'pt'] as const) test(`${language} ${width}: named undo history exposes the current step and restores a floor change`, async ({ page }) => {
   // Keep all before/after export assertions on slower production-browser runs.
   test.slow();
   await page.setViewportSize({ width, height: 900 });
   const project = JSON.parse(await readFile('tests/fixtures/save-conflicts.openplan.json', 'utf8'));
-  await page.addInitScript(({ project, language }) => {
+  await seedProject(page, project);
+  await page.addInitScript(language => {
     localStorage.setItem('o3d_locale', language);
-    localStorage.setItem('floorplan_projects', JSON.stringify({ [project.id]: JSON.stringify(project) }));
-  }, { project, language });
+  }, language);
   await page.goto(`/editor?id=${project.id}`);
   async function exported() {
     await page.getByRole('button', { name: /^(?:Export|Exportar)$/, exact: true }).click();

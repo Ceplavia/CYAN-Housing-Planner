@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { savedProjects } from './storage';
 
@@ -12,13 +12,16 @@ test('downloaded capture survives initial save failure and retries without reimp
   await page.addInitScript(() => {
     localStorage.setItem('o3d_locale', 'pt');
     (window as any).failCaptureSave = !localStorage.getItem('captureSaveRecovered');
-    for (const method of ['put', 'add'] as const) {
-      const original = IDBObjectStore.prototype[method];
-      IDBObjectStore.prototype[method] = function(...args) {
-        if (this.name === 'projects' && (window as any).failCaptureSave) throw new DOMException('Full', 'QuotaExceededError');
-        return original.apply(this, args);
-      };
-    }
+  });
+  // Server storage: the capture's first save hits POST /api/projects.
+  await page.route(/\/api\/projects$/, async route => {
+    const failing = await page.evaluate(() => (window as any).failCaptureSave === true).catch(() => false);
+    if (failing && route.request().method() === 'POST') {
+      await route.fulfill({
+        status: 500, contentType: 'application/json',
+        body: JSON.stringify({ error: 'Could not save to server storage. Download your project as JSON to keep a copy.' }),
+      });
+    } else await route.continue();
   });
   await page.goto('/editor?import=AB2C');
   const alert = page.getByRole('alert');

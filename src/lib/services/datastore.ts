@@ -1,6 +1,9 @@
 import { readProject } from '$lib/utils/projectValidation';
 import type { Project } from '$lib/models/types';
-import { withDatabase, transaction, request, records, readRecord, libraryBackup, notifyLibraryChange } from './localDatabase';
+import { withDatabase, transaction, request, records, readRecord, updateRecord, libraryBackup, notifyLibraryChange } from './localDatabase';
+import { get } from 'svelte/store';
+import { sessionUser } from './session';
+import { createServerStore, downloadServerLibraryBackup } from './serverStore';
 export { PROJECTS_STORAGE_KEY, LIBRARY_CHANGE_KEY } from './localDatabase';
 
 export interface DataStore {
@@ -15,6 +18,14 @@ export interface DataStore {
   saveThumbnail(id: string, dataUrl: string): Promise<void>;
   getThumbnail(id: string): Promise<string | null>;
   getThumbnails(): Promise<Record<string, string>>;
+  /** Serialized snapshot blob for version history, or null when absent. */
+  getVersions(id: string): Promise<string | null>;
+  setVersions(id: string, raw: string | null): Promise<void>;
+  /**
+   * Read-modify-write the snapshot blob. The browser store applies the update
+   * inside one IndexedDB transaction; the server store is last-write-wins.
+   */
+  updateVersions(id: string, update: (raw: string | null) => string | null): Promise<void>;
 }
 
 
@@ -26,7 +37,7 @@ export class ProjectConflictError extends Error {
 }
 
 /** Keep in-document saves ordered; IndexedDB transactions also protect browsers without Web Locks. */
-async function mutateLibrary<T>(change: () => Promise<T>): Promise<T> {
+export async function mutateLibrary<T>(change: () => Promise<T>): Promise<T> {
   if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.locks?.request) {
     return navigator.locks.request('openplan3d-project-library', change);
   }
@@ -177,7 +188,41 @@ export function createLocalStore(): DataStore {
       try { return await withDatabase(db => transaction(db, ['thumbnails'], 'readonly', tx => records(tx, 'thumbnails'))); }
       catch { return {}; }
     },
+
+    async getVersions(id) { return readRecord('history', id); },
+    async setVersions(id, raw) { await updateRecord('history', id, () => raw); },
+    async updateVersions(id, update) { await updateRecord('history', id, update); },
   };
 }
 
 export const localStore = createLocalStore();
+
+/**
+ * The active backend: the self-hosted API when signed in, browser storage
+ * otherwise. Anonymous users never reach the editor, so localStore remains
+ * for tests and any pre-sign-in code path.
+ */
+const serverStore = createServerStore();
+const active = () => (get(sessionUser) ? serverStore : localStore);
+
+export const projectStore: DataStore = {
+  has: (id) => active().has(id),
+  assertCurrent: (id) => active().assertCurrent(id),
+  saveCopy: (project, suffix) => active().saveCopy(project, suffix),
+  save: (project) => active().save(project),
+  load: (id) => active().load(id),
+  list: () => active().list(),
+  delete: (id) => active().delete(id),
+  duplicate: (id) => active().duplicate(id),
+  saveThumbnail: (id, dataUrl) => active().saveThumbnail(id, dataUrl),
+  getThumbnail: (id) => active().getThumbnail(id),
+  getThumbnails: () => active().getThumbnails(),
+  getVersions: (id) => active().getVersions(id),
+  setVersions: (id, raw) => active().setVersions(id, raw),
+  updateVersions: (id, update) => active().updateVersions(id, update),
+};
+
+export async function downloadActiveLibraryBackup() {
+  if (get(sessionUser)) return downloadServerLibraryBackup();
+  return downloadLibraryBackup();
+}

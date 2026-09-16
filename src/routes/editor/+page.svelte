@@ -6,11 +6,11 @@
   import { onMount } from 'svelte';
   import { get } from 'svelte/store';
   import { base } from '$app/paths';
-  import { replaceState } from '$app/navigation';
+  import { goto, replaceState } from '$app/navigation';
   import { page } from '$app/state';
   import { reportLoadingFailure } from '$lib/services/deployment';
   import { currentProject, viewMode, selectedElementId, selectedRoomId, createDefaultProject, loadProject, selectedTool, placingFurnitureId, elevationWallId, elevationPickMode } from '$lib/stores/project';
-  import { localStore, storageErrorMessage, downloadLibraryBackup } from '$lib/services/datastore';
+  import { projectStore, storageErrorMessage, downloadActiveLibraryBackup } from '$lib/services/datastore';
   import { autoSave, markClean, saveState } from '$lib/stores/saveStatus';
   import { createProjectFromRoomPlan, isRoomPlanJson } from '$lib/utils/roomplanImport';
   import TopBar from '$lib/components/toolbar/TopBar.svelte';
@@ -27,6 +27,8 @@
   import PrintLayout from '$lib/components/editor/PrintLayout.svelte';
   import OnboardingTooltip from '$lib/components/OnboardingTooltip.svelte';
   import { triggerTip } from '$lib/stores/onboarding.svelte';
+
+  let { data } = $props();
 
   let commandPaletteOpen = $state(false);
   let printOpen = $state(false);
@@ -71,7 +73,7 @@
   let loadError = $state<string | null>(null);
 
   async function backupLibrary() {
-    try { await downloadLibraryBackup(); }
+    try { await downloadActiveLibraryBackup(); }
     catch (error) { loadError = storageErrorMessage(error); }
   }
 
@@ -131,6 +133,7 @@
   async function initializeEditor() {
     loadError = null;
     try {
+      if (!data.user) { goto(`${base}/`); return; }
       const url = new URL(window.location.href);
 
       // iOS capture handoff: ?import=CODE
@@ -153,7 +156,7 @@
         // A new/imported project may exist only in memory if its first save failed.
         const pending = get(currentProject);
         if (pending?.id === id && get(saveState) !== 'saved') { ready = true; return; }
-        const project = await localStore.load(id);
+        const project = await projectStore.load(id);
         if (project) {
           loadProject(project);
           markClean();

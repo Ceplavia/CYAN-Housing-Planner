@@ -1,13 +1,14 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { readFile } from 'node:fs/promises';
+import { seedProject } from './storage';
 
 test('Portuguese vector downloads use localized furniture captions', async ({ page }) => {
   test.slow();
   const project = JSON.parse(await readFile('tests/fixtures/furniture-fidelity.openplan.json', 'utf8'));
-  await page.addInitScript(project => {
+  await seedProject(page, project);
+  await page.addInitScript(() => {
     localStorage.setItem('o3d_locale', 'pt');
-    localStorage.setItem('floorplan_projects', JSON.stringify({ [project.id]: JSON.stringify(project) }));
-  }, project);
+  });
   await page.goto(`/editor?id=${project.id}`);
   async function download(name: string) {
     await page.getByRole('button', { name: 'Exportar', exact: true }).click();

@@ -13,6 +13,23 @@ export interface LibraryRestorePreview {
   readonly recoveryArchives: number;
   readonly warnings: readonly string[];
   restore(signal?: AbortSignal): Promise<RestoreResult>;
+  restoreWith(sink: LibrarySink): Promise<RestoreResult>;
+}
+
+/**
+ * Storage target for a validated restore. The orchestration picks fresh IDs,
+ * rewrites project/version payloads and dedupes recovery archives; the sink
+ * only persists what it is given, so browser and server backends share one
+ * correctness path.
+ */
+export interface LibrarySink {
+  projectExists(id: string): Promise<boolean>;
+  addProject(id: string, raw: string): Promise<void>;
+  addThumbnail(id: string, raw: string): Promise<void>;
+  addHistory(id: string, raw: string): Promise<void>;
+  /** Stored archive bytes, or null when this archive ID is free. */
+  recoveryAt(id: string): Promise<string | null>;
+  addRecovery(id: string, raw: string): Promise<void>;
 }
 
 const newId = () => globalThis.crypto?.randomUUID?.() ?? `restore-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
@@ -140,53 +157,69 @@ export function prepareLibraryRestore(raw: string, sourceName = 'Library backup'
   if (archives.length) warnings.push(`${archives.length} recovery archive${archives.length === 1 ? '' : 's'} will be included in future library backups.`);
 
   let active: Promise<RestoreResult> | undefined, completed: RestoreResult | undefined;
-  const restore = (signal?: AbortSignal): Promise<RestoreResult> => {
-    if (completed) return Promise.resolve(completed);
-    if (active) return active;
-    if (signal?.aborted) return Promise.reject(new DOMException('Restore cancelled.', 'AbortError'));
-    if (!candidates.length && !archives.length) return Promise.reject(new Error('This backup contains no projects or recovery data.'));
-    active = withDatabase(db => transaction(db, ['projects', 'thumbnails', 'history', 'meta'], 'readwrite', async tx => {
-      await migrateLegacy(tx, true);
-      const saved: { id: string; name: string }[] = [];
-      const store = tx.objectStore('projects');
-      for (const candidate of candidates) {
-        let id: string, attempts = 0;
-        do {
-          if (++attempts > 5) throw new Error('Could not choose a restored project ID. Try restoring again.');
-          id = newId();
-        } while (await request(store.get(id)) !== undefined || Object.hasOwn(projects, id));
-        const project = JSON.parse(candidate.raw);
-        project.id = id; project.name = copyName(project.name); project.updatedAt = new Date();
-        await request(store.add(JSON.stringify(project), id));
-        if (candidate.thumbnail) await request(tx.objectStore('thumbnails').add(candidate.thumbnail, id));
-        if (candidate.versions.length) {
-          const versions = candidate.versions.map(item => {
-            const project = JSON.parse(item.data);
-            project.id = id; project.name = copyName(project.name);
-            return { ...item, data: JSON.stringify(project) };
-          });
-          await request(tx.objectStore('history').add(writeSnapshotStorage(versions), id));
-        }
-        saved.push({ id, name: project.name });
+  const run = async (sink: LibrarySink): Promise<RestoreResult> => {
+    const saved: { id: string; name: string }[] = [];
+    for (const candidate of candidates) {
+      let id: string, attempts = 0;
+      do {
+        if (++attempts > 5) throw new Error('Could not choose a restored project ID. Try restoring again.');
+        id = newId();
+      } while (await sink.projectExists(id) || Object.hasOwn(projects, id));
+      const project = JSON.parse(candidate.raw);
+      project.id = id; project.name = copyName(project.name); project.updatedAt = new Date();
+      await sink.addProject(id, JSON.stringify(project));
+      if (candidate.thumbnail) await sink.addThumbnail(id, candidate.thumbnail);
+      if (candidate.versions.length) {
+        const versions = candidate.versions.map(item => {
+          const project = JSON.parse(item.data);
+          project.id = id; project.name = copyName(project.name);
+          return { ...item, data: JSON.stringify(project) };
+        });
+        await sink.addHistory(id, writeSnapshotStorage(versions));
       }
-      for (const archive of archives) {
-        const meta = tx.objectStore('meta');
-        let id = archive.id, attempts = 0;
-        while (true) {
-          const existing = await request(meta.get(`library-recovery:${id}`));
-          if (existing === archive.raw) break;
-          if (existing === undefined) { await request(meta.add(archive.raw, `library-recovery:${id}`)); break; }
-          if (++attempts > 5) throw new Error('Could not preserve recovery data. Try restoring again.');
-          id = newId();
-        }
+      saved.push({ id, name: project.name });
+    }
+    for (const archive of archives) {
+      let id = archive.id, attempts = 0;
+      while (true) {
+        const existing = await sink.recoveryAt(id);
+        if (existing === archive.raw) break;
+        if (existing === null) { await sink.addRecovery(id, archive.raw); break; }
+        if (++attempts > 5) throw new Error('Could not preserve recovery data. Try restoring again.');
+        id = newId();
       }
-      return Object.freeze({ projects: Object.freeze(saved.map(p => Object.freeze(p))), recoveryArchives: archives.length });
-    }, signal), { migrate: false }).then(result => {
+    }
+    return Object.freeze({ projects: Object.freeze(saved.map(p => Object.freeze(p))), recoveryArchives: archives.length });
+  };
+  const finish = (pending: Promise<RestoreResult>): Promise<RestoreResult> => {
+    active = pending.then(result => {
       completed = result;
       for (const project of result.projects) notifyLibraryChange(project.id);
       return result;
     }).finally(() => { active = undefined; });
     return active;
   };
-  return Object.freeze({ entries: Object.freeze(entries), projectCount: candidates.length, recoveryArchives: archives.length, warnings: Object.freeze(warnings), restore });
+  const guard = (signal?: AbortSignal): Promise<RestoreResult> | undefined => {
+    if (completed) return Promise.resolve(completed);
+    if (active) return active;
+    if (signal?.aborted) return Promise.reject(new DOMException('Restore cancelled.', 'AbortError'));
+    if (!candidates.length && !archives.length) return Promise.reject(new Error('This backup contains no projects or recovery data.'));
+    return undefined;
+  };
+  const restoreWith = (sink: LibrarySink): Promise<RestoreResult> => guard() ?? finish(run(sink));
+  const restore = (signal?: AbortSignal): Promise<RestoreResult> => guard(signal) ?? finish(
+    withDatabase(db => transaction(db, ['projects', 'thumbnails', 'history', 'meta'], 'readwrite', async tx => {
+      await migrateLegacy(tx, true);
+      const store = tx.objectStore('projects');
+      const meta = tx.objectStore('meta');
+      return run({
+        async projectExists(id) { return (await request(store.get(id))) !== undefined; },
+        async addProject(id, raw) { await request(store.add(raw, id)); },
+        async addThumbnail(id, raw) { await request(tx.objectStore('thumbnails').add(raw, id)); },
+        async addHistory(id, raw) { await request(tx.objectStore('history').add(raw, id)); },
+        async recoveryAt(id) { return (await request(meta.get(`library-recovery:${id}`))) ?? null; },
+        async addRecovery(id, raw) { await request(meta.add(raw, `library-recovery:${id}`)); },
+      });
+    }, signal), { migrate: false }));
+  return Object.freeze({ entries: Object.freeze(entries), projectCount: candidates.length, recoveryArchives: archives.length, warnings: Object.freeze(warnings), restore, restoreWith });
 }

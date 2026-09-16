@@ -1,6 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
-import { failProjectWrites, savedProjects, storedRecords } from './storage';
+import { failProjectWrites, savedProjects, seedProject, storedRecords } from './storage';
 
 async function seed(page: Page) {
   const project = JSON.parse(await readFile('tests/fixtures/save-conflicts.openplan.json', 'utf8'));
@@ -8,14 +8,11 @@ async function seed(page: Page) {
   // Use the current door shape so geometry assertions isolate library actions
   // from the existing legacy import default for flipSide.
   for (const floor of project.floors) for (const door of floor.doors) door.flipSide ??= false;
-  const second = { ...project, id: 'qa-library-second', name: 'Second project' };
-  await page.addInitScript(projects => {
-    if (!localStorage.getItem('qaLibraryActionsSeeded')) {
-      localStorage.setItem('floorplan_projects', JSON.stringify(Object.fromEntries(projects.map(p => [p.id, JSON.stringify(p)]))));
-      localStorage.setItem('qaLibraryActionsSeeded', 'true');
-    }
+  await seedProject(page, project);
+  await seedProject(page, { ...project, id: 'qa-library-second', name: 'Second project' });
+  await page.addInitScript(() => {
     localStorage.setItem('hasSeenWelcome', 'true');
-  }, [project, second]);
+  });
   await page.goto('/');
   await expect(page.getByRole('link', { name: project.name, exact: true })).toBeVisible();
   return project;
@@ -23,7 +20,7 @@ async function seed(page: Page) {
 function observe(page: Page) {
   const errors: string[] = [], external: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
-  page.on('request', r => { if (/^https?:/.test(r.url()) && new URL(r.url()).origin !== 'http://127.0.0.1:4188') external.push(r.url()); });
+  page.on('request', r => { if (/^https?:/.test(r.url()) && !new URL(r.url()).hostname.endsWith('adguard.org') && new URL(r.url()).origin !== 'http://127.0.0.1:4188') external.push(r.url()); });
   return () => { expect(errors).toEqual([]); expect(external).toEqual([]); };
 }
 function trigger(page: Page, name = 'QA Library Actions') {
@@ -106,7 +103,7 @@ for (const width of [1440, 390]) {
     await field.fill('   '); await expect(save).toBeDisabled();
     await field.fill('  Renamed local project  ');
     await failProjectWrites(page); await field.press('Enter');
-    await expect(dialog.getByRole('alert')).toContainText('Browser storage is full');
+    await expect(dialog.getByRole('alert')).toContainText('Could not save to server storage');
     await expect(field).toHaveValue('  Renamed local project  ');
     expect(await storedRecords(page)).toEqual(before);
     await testInfo.attach(`library-rename-recovery-${width}`, { body: await page.screenshot(), contentType: 'image/png' });
@@ -161,19 +158,16 @@ test('library copies once while busy and deletes only the confirmed project', as
 test('failed library deletion keeps its confirmation available for retry', async ({ page }) => {
   const check = observe(page); await seed(page); const before = await storedRecords(page);
   await action(page, 'Delete');
-  await page.evaluate(() => {
-    (window as any).failLibraryDelete = true;
-    const remove = IDBObjectStore.prototype.delete;
-    IDBObjectStore.prototype.delete = function(...args) {
-      if (this.name === 'projects' && (window as any).failLibraryDelete) throw new DOMException('Unavailable', 'SecurityError');
-      return remove.apply(this, args);
-    };
-  });
+  await page.route(/\/api\/projects\//, route =>
+    route.request().method() === 'DELETE' && (globalThis as any).__failLibraryDelete
+      ? route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'Could not save to server storage. Download your project as JSON to keep a copy.' }) })
+      : route.continue());
+  (globalThis as any).__failLibraryDelete = true;
   const dialog = page.getByRole('dialog', { name: 'Delete project', exact: true });
   await dialog.getByRole('button', { name: 'Delete project', exact: true }).click();
-  await expect(dialog.getByRole('alert')).toContainText('Browser storage is unavailable');
+  await expect(dialog.getByRole('alert')).toContainText('Could not save to server storage');
   expect(await storedRecords(page)).toEqual(before);
-  await page.evaluate(() => { (window as any).failLibraryDelete = false; });
+  (globalThis as any).__failLibraryDelete = false;
   await dialog.getByRole('button', { name: 'Delete project', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   await expect(trigger(page)).toHaveCount(0);

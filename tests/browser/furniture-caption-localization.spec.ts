@@ -1,11 +1,12 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { readFile } from 'node:fs/promises';
+import { seedProject } from './storage';
 
 test('language changes redraw furniture captions without changing exported geometry', async ({ page }) => {
   test.slow();
   const project = JSON.parse(await readFile('tests/fixtures/furniture-fidelity.openplan.json', 'utf8'));
+  await seedProject(page, project);
   await page.addInitScript(project => {
-    localStorage.setItem('floorplan_projects', JSON.stringify({ [project.id]: JSON.stringify(project) }));
     localStorage.setItem('o3d_locale', 'en');
     const captions = new Set<string>();
     (window as any).__furnitureCaptions = captions;

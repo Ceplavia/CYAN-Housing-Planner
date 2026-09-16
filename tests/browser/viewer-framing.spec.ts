@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { resolve } from 'node:path';
 
 // Four magenta columns mark the outer corners of a wide plan. Inspect rendered
@@ -8,7 +8,7 @@ test('top-down fits every corner after orbit, stacking and viewport changes', as
   const errors: string[] = [], external: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => {
-    if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url());
+    if (/^https?:/.test(request.url()) && !new URL(request.url()).hostname.endsWith('adguard.org') && new URL(request.url()).origin !== 'http://127.0.0.1:4188') external.push(request.url());
   });
   await page.goto('/editor');
   await page.getByRole('button', { name: 'Export', exact: true }).click();

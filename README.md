@@ -2,7 +2,7 @@
 
 **Free Open Source 2D/3D Floor Plan Editor**
 
-Design floor plans in an intuitive 2D editor, then instantly preview them in a fully navigable 3D view — all in your browser. No account required, no server dependency; your projects stay on your device.
+Design floor plans in an intuitive 2D editor, then instantly preview them in a fully navigable 3D view — all in your browser. Self-host it with Docker: accounts, projects, version history and thumbnails live in a SQLite file on your own server.
 
 Based on the open-source [openplan3d](https://github.com/laanlabs/openPlan3D) project.
 
@@ -133,6 +133,32 @@ npm run preview
 
 ---
 
+## 🐳 Self-hosting
+
+Projects are stored server-side per user account, so the app needs its Node 24 server (not a static host). The Dockerfile produces a single container with no external services:
+
+```bash
+docker build -t cyan-housing-planner .
+docker run -d -p 3000:3000 -v cyan-data:/data --name cyan-planner cyan-housing-planner
+```
+
+Open [http://localhost:3000](http://localhost:3000), register an account, and start planning. The SQLite database lives in `/data` — the `-v cyan-data:/data` mount keeps accounts and plans across container rebuilds.
+
+Environment variables:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PORT` | `3000` | Listen port inside the container |
+| `DATA_DIR` | `/data` (`data/` outside Docker) | SQLite database directory |
+| `MAX_PROJECTS_PER_USER` | `50` | Per-account project quota (per-user `project_limit` overrides; reserved for plan/subscription tiers) |
+| `BODY_SIZE_LIMIT` | `64M` (set in Dockerfile) | Max request body — large plans and library restores need this |
+| `AUTH_RATE_LIMIT` | `20` per minute per IP | Login/register attempts cap; `0` disables |
+| `ORIGIN` | request origin | Set to your public URL when behind a reverse proxy (e.g. `https://plans.example.com`) |
+
+Running without Docker: `npm run build` then `DATA_DIR=data PORT=3000 node build/index.js`.
+
+---
+
 ## ⌨️ Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -160,7 +186,8 @@ npm run preview
 - **[TypeScript](https://www.typescriptlang.org)** — Type safety
 - **[jsPDF](https://github.com/parallax/jsPDF)** — PDF generation
 - **[dxf-writer](https://github.com/nicholaschiasson/dxf-writer)** — DXF export
-- **[Firebase](https://firebase.google.com)** — Hosting, analytics and temporary iPhone handoffs; projects stay local
+- **[node:sqlite](https://nodejs.org/api/sqlite.html)** — Server-side project, session and account storage
+- **[Firebase](https://firebase.google.com)** — Optional analytics and temporary iPhone handoffs
 
 ---
 
