@@ -72,6 +72,7 @@ test('library backup round-trips history and thumbnails into a fresh account', a
   expect(copyHistory[0].description).toBe('Seeded version');
   expect(JSON.parse(copyHistory[0].data).id).toBe(copyId);
   expect(otherBackup.thumbnails[copyId]).toBe(thumbnail);
+  await other.delete('/api/auth/me');
   await other.dispose();
 });
 

@@ -13,11 +13,16 @@ const cacheTest = test.extend({
     const context = await playwright[browserName].launchPersistentContext(profile, {
       ...launchOptions, ...contextOptions, headless, viewport,
     });
+    const api = await registerAccount(playwright.request);
     try {
-      await signIn(context, await registerAccount(playwright.request));
+      await signIn(context, api);
       await use(context);
     }
-    finally { await context.close(); await rm(profile, { recursive: true, force: true }); }
+    finally {
+      await api.delete('http://127.0.0.1:4188/api/auth/me').catch(() => {});
+      await api.dispose();
+      await context.close(); await rm(profile, { recursive: true, force: true });
+    }
   },
 });
 

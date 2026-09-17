@@ -6,7 +6,12 @@ import { sessionUser } from './session';
 const newId = () => globalThis.crypto?.randomUUID?.() ?? `project-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
 async function api(path: string, init?: RequestInit): Promise<any> {
-  const res = await fetch(path, init);
+  // Bodies are always JSON; without an explicit content-type fetch sends
+  // text/plain, which SvelteKit's CSRF check rejects when ORIGIN is unset.
+  const res = await fetch(path, {
+    headers: init?.body ? { 'Content-Type': 'application/json' } : undefined,
+    ...init,
+  });
   if (res.status === 409) throw new ProjectConflictError();
   if (!res.ok) {
     const body = await res.json().catch(() => null);

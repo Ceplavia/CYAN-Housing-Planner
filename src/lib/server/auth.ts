@@ -61,6 +61,11 @@ export function createUser(username: string, password: string): AuthUser {
   return { id, username: name, plan: 'free', projectLimit: null };
 }
 
+/** Deletes the user row; foreign keys cascade to sessions and all library data. */
+export function deleteUser(userId: string): void {
+  database().prepare('DELETE FROM users WHERE id = ?').run(userId);
+}
+
 const DUMMY_HASH = `scrypt$${SCRYPT.N}$${SCRYPT.r}$${SCRYPT.p}$${'0'.repeat(32)}$${'0'.repeat(128)}`;
 
 export function verifyUser(username: string, password: string): AuthUser {

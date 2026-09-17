@@ -30,10 +30,12 @@ export const test = base.extend({
     const api = await registerAccount(playwright.request);
     try {
       await signIn(context, api);
+      await use(context);
     } finally {
+      // Remove the throwaway account and every row it owns (FK cascade).
+      await api.delete(`${BASE}/api/auth/me`).catch(() => {});
       await api.dispose();
     }
-    await use(context);
   },
 });
 
