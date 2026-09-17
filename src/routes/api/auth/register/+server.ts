@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import { AuthError, createSession, createUser, registrationOpen, setSessionCookie } from '$lib/server/auth';
 import { rateLimited } from '$lib/server/rateLimit';
 
-export async function POST({ request, cookies, url, getClientAddress }) {
+export async function POST({ request, cookies, getClientAddress }) {
   if (!registrationOpen()) return json({ error: 'Registration is closed on this server.' }, { status: 403 });
   if (rateLimited(`auth:${getClientAddress()}`, 20)) {
     return json({ error: 'Too many attempts. Try again in a minute.' }, { status: 429 });
@@ -11,7 +11,7 @@ export async function POST({ request, cookies, url, getClientAddress }) {
     const body = await request.json();
     const user = createUser(String(body?.username ?? ''), String(body?.password ?? ''));
     const { token } = createSession(user.id);
-    setSessionCookie(cookies, token, url.protocol === 'https:');
+    setSessionCookie(cookies, token, request.headers.get('x-forwarded-proto') === 'https');
     return json({ username: user.username }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthError) return json({ error: error.message }, { status: error.status });
