@@ -32,10 +32,10 @@ export async function storedRecords(page: Page, store = 'projects'): Promise<Rec
   if (store !== 'projects' && store !== 'history') throw new Error(`unknown store: ${store}`);
   const out: Record<string, string> = {};
   for (const p of projects) {
-    const full = await page.request.get(`/api/projects/${encodeURIComponent(p.id)}/${store === 'history' ? 'history' : ''}`);
+    const full = await page.request.get(`/api/projects/${encodeURIComponent(p.id)}${store === 'history' ? '/history' : ''}`);
     if (!full.ok()) continue;
     const body = await full.json();
-    const value = store === 'history' ? body.data : body.data;
+    const value = body.data;
     if (value !== null && value !== undefined) out[p.id] = value;
   }
   return out;

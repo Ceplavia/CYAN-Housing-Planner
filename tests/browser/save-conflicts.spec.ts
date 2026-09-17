@@ -51,6 +51,7 @@ for (const width of [1440, 390]) {
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     // Server saves do not broadcast to other tabs; the stale tab detects the
     // conflict on its own save, same as before.
+    await expect.poll(async () => (await saved(other))[source.id]?.name).toBe('Newer saved version');
     await other.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(other.getByRole('alert')).toContainText('another tab');
     const newer = (await saved(page))[source.id];
@@ -134,8 +135,12 @@ test('edits made while a recovery copy waits for a lock remain in the current ta
   const source = await seed(page), other = await context.newPage();
   const check = observe(page), checkOther = observe(other);
   await page.goto(`/editor?id=${source.id}`); await other.goto(`/editor?id=${source.id}`);
+  // The other tab must finish loading before this tab's save commits, or it
+  // would adopt the new revision and see no conflict.
+  await expect(other.getByTitle('Click to rename', { exact: true })).toContainText(source.name);
   await rename(page, 'Other tab update'); await page.getByRole('button', { name: 'Save', exact: true }).click();
   // Server saves do not broadcast to other tabs; the stale tab notices on its next save.
+  await expect.poll(async () => (await saved(other))[source.id]?.name).toBe('Other tab update');
   await other.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(other.getByRole('alert')).toContainText('another tab');
   await rename(other, 'Copy at click time');

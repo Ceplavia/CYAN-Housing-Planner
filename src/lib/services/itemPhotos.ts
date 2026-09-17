@@ -136,5 +136,5 @@ export function photoPreview(data: string | undefined): string | undefined {
 export function downloadPhoto(name: string, data: string) {
   const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
   const url = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
-  const link = document.createElement('a'); link.href = url; link.download = name.split('/').at(-1)!; link.click(); URL.revokeObjectURL(url);
+  const link = document.createElement('a'); link.href = url; link.download = name.split('/').at(-1)!; link.click(); setTimeout(() => URL.revokeObjectURL(url));
 }

@@ -26,7 +26,7 @@ function download(blob: Blob, filename: string) {
   a.href = url;
   a.download = filename;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url));
 }
 
 // DXF layer colors (AutoCAD Color Index)

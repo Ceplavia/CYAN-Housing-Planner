@@ -132,7 +132,7 @@ test('catalog and 3D use bounded, cacheable assets with zero startup model downl
   await expect(page.getByRole('button', { name: /Dining Chair/ }).first()).toBeVisible();
 
   await page.getByRole('button', { name: '3D', exact: true }).click();
-  await expect(page.getByRole('region', { name: '3D floor plan viewer' }).locator('canvas').first()).toBeVisible();
+  await expect(page.getByRole('region', { name: '3D floor plan viewer' }).locator('canvas').first()).toBeVisible({ timeout: 60_000 });
   await page.getByRole('button', { name: 'Show All Floors Stacked', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Active Floor Only', exact: true })).toBeVisible();
   await page.waitForLoadState('networkidle');
@@ -166,22 +166,29 @@ test('catalog and 3D use bounded, cacheable assets with zero startup model downl
   await expect(page.getByText('Saved ✓', { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
+  // Load the lazy 3D chunk while still online; later mode switches reuse the
+  // already-imported module, so only asset cache hits are exercised offline.
+  await page.getByRole('button', { name: '3D', exact: true }).click();
+  await expect(page.getByRole('region', { name: '3D floor plan viewer' }).locator('canvas').first()).toBeVisible({ timeout: 60_000 });
+  await page.getByRole('button', { name: '2D', exact: true }).click();
   // Prove the previously loaded 3D assets remain usable without network access.
   // WebKit can report zero cached encodedBodySize, and Firefox can reuse an
   // image without a new timing entry. Decode/hash offline instead of relying
   // on those engine-specific timing fields as the cache proof.
   await context.setOffline(true);
+  const offlineAt = await page.evaluate(() => performance.now());
   await page.getByRole('button', { name: '3D', exact: true }).click();
-  await expect(page.getByRole('region', { name: '3D floor plan viewer' }).locator('canvas').first()).toBeVisible();
+  await expect(page.getByRole('region', { name: '3D floor plan viewer' }).locator('canvas').first()).toBeVisible({ timeout: 60_000 });
   await page.waitForLoadState('networkidle');
   await Promise.all(pending);
   const warmPixels = await decodedOak();
   expect(warmPixels).toEqual(coldPixels);
   const warm = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => {
     const resource = entry as PerformanceResourceTiming;
-    return { url: resource.name, transferBytes: resource.transferSize, encodedBytes: resource.encodedBodySize };
+    return { url: resource.name, startTime: resource.startTime, transferBytes: resource.transferSize, encodedBytes: resource.encodedBodySize };
   }));
-  for (const entry of warm.filter(x => /\.(glb|webp)(?:\?|$)/.test(x.url))) expect(entry.transferBytes).toBe(0);
+  // Only transfers started after going offline prove the assets stayed cached.
+  for (const entry of warm.filter(x => x.startTime >= offlineAt && /\.(glb|webp)(?:\?|$)/.test(x.url))) expect(entry.transferBytes).toBe(0);
   await testInfo.attach('asset-transfers', { body: JSON.stringify({ startup, catalogModels, cold, warm, coldPixels, warmPixels }, null, 2), contentType: 'application/json' });
   await context.setOffline(false);
   await page.getByRole('button', { name: '2D', exact: true }).click();

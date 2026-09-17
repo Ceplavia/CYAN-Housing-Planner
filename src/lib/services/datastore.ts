@@ -64,7 +64,8 @@ export async function downloadLibraryBackup() {
   link.href = url;
   link.download = 'openplan3d-library-backup.json';
   link.click();
-  URL.revokeObjectURL(url);
+  // Revoking synchronously races the browser's read of the blob URL.
+  setTimeout(() => URL.revokeObjectURL(url));
 }
 
 /** Each browser document remembers only revisions it actually opened or saved. */

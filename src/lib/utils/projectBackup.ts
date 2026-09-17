@@ -8,5 +8,5 @@ export function downloadProjectJSON(project: Project) {
   link.href = url;
   link.download = `${project.name || 'project'}.json`;
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url));
 }

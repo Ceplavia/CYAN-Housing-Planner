@@ -170,5 +170,5 @@ export async function prepareProjectPackage(file: File) {
 export function downloadProjectPackage(project: Project) {
   const bytes = projectPackageBytes(project);
   const url = URL.createObjectURL(new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/zip' }));
-  const link = document.createElement('a'); link.href = url; link.download = 'openplan3d-project.zip'; link.click(); URL.revokeObjectURL(url);
+  const link = document.createElement('a'); link.href = url; link.download = 'openplan3d-project.zip'; link.click(); setTimeout(() => URL.revokeObjectURL(url));
 }

@@ -147,7 +147,7 @@ export async function downloadServerLibraryBackup() {
   link.href = url;
   link.download = 'cyan-housing-planner-library-backup.json';
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url));
 }
 
 /** Restore a backup into the signed-in account; the server validates and commits atomically. */
