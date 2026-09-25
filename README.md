@@ -1,5 +1,7 @@
 # CYAN-Housing-Planner
 
+[繁體中文](readme-zh-hk.md)
+
 **Self-hosted 2D/3D floor plan editor** — draw plans in 2D, preview and walk through them in 3D, and keep every project on your own server.
 
 Forked from the MIT-licensed [openplan3d](https://github.com/laanlabs/openPlan3D) project and reworked into a multi-user, self-hostable app: accounts, per-user project storage, quotas and an admin console, with no cloud dependencies.
