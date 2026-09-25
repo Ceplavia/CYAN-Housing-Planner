@@ -1576,5 +1576,6 @@
   "sub.subscribed": "Subscribed",
   "sub.currentPlan": "Current plan",
   "sub.soon": "Not available yet",
-  "sub.start": "Get started"
+  "sub.start": "Get started",
+  "admin.apply": "Apply plan change"
 }

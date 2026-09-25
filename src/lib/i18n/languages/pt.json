@@ -1767,5 +1767,6 @@
   "sub.subscribed": "Subscrito",
   "sub.currentPlan": "Plano atual",
   "sub.soon": "Ainda indisponível",
-  "sub.start": "Começar"
+  "sub.start": "Começar",
+  "admin.apply": "Aplicar alteração"
 }

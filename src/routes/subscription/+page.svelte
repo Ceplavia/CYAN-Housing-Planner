@@ -27,15 +27,20 @@
 
   <div class="max-w-4xl mx-auto px-6 py-14">
     <div class="text-center mb-10">
-      <h1 class="text-3xl font-bold text-gray-900">{$t('sub.title')}</h1>
+      <h1 class="text-3xl font-bold text-gray-800">{$t('sub.title')}</h1>
       <p class="mt-2 text-gray-500">{$t('sub.subtitle')}</p>
     </div>
 
     <div class="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
       {#each data.plans as plan (plan.id)}
         {@const features = bullets[plan.id] ?? ['sub.fLimit']}
-        <div class="bg-white rounded-xl border {plan.id !== 'free' ? 'border-blue-300 shadow-md' : 'border-gray-200'} p-8 flex flex-col">
-          <h2 class="text-xl font-bold text-gray-900">{plan.id === 'free' ? $t('sub.free') : plan.id}</h2>
+        {@const current = data.user && data.user.plan === plan.id}
+        {@const accent = current || (!data.user && plan.id !== 'free')}
+        <div class="bg-white rounded-xl border {accent ? 'border-blue-400 shadow-md ring-1 ring-blue-400/30' : 'border-gray-200'} p-8 flex flex-col">
+          <div class="flex items-center gap-2">
+            <h2 class="text-xl font-bold text-gray-800">{plan.id === 'free' ? $t('sub.free') : plan.id}</h2>
+            {#if current}<span class="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-600">{$t('sub.currentPlan')}</span>{/if}
+          </div>
           <ul class="mt-6 space-y-3 text-sm text-gray-600 flex-1">
             {#each features as key}
               <li class="flex items-start gap-2">

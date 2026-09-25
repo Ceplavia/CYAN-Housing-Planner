@@ -37,15 +37,23 @@
   let pendingPlan = $state<Record<string, string>>({});
   let pendingExpiry = $state<Record<string, string>>({});
 
+  const todayISO = new Date().toISOString().slice(0, 10);
+
   function isoDate(ms: number | null): string {
     return ms ? new Date(ms).toISOString().slice(0, 10) : '';
   }
 
   function onPlanChange(user: AdminUser, plan: string) {
     if (plan === 'free') { delete pendingPlan[user.id]; void patch(user, { plan: 'free' }); return; }
+    // Paid plans wait for the ✓ apply click — typing into a date field
+    // commits partial years otherwise.
     pendingPlan[user.id] = plan;
-    pendingExpiry[user.id] = isoDate(user.planExpiresAt);
-    if (pendingExpiry[user.id]) void patchPlan(user); // already dated — apply at once
+    pendingExpiry[user.id] = pendingExpiry[user.id] ?? isoDate(user.planExpiresAt);
+  }
+
+  function expiryDirty(user: AdminUser): boolean {
+    return pendingPlan[user.id] !== undefined
+      || (pendingExpiry[user.id] !== undefined && pendingExpiry[user.id] !== isoDate(user.planExpiresAt));
   }
 
   function patchPlan(user: AdminUser) {
@@ -162,11 +170,18 @@
                   </td>
                   <td class="py-3 pr-4">
                     {#if (pendingPlan[user.id] ?? user.plan) !== 'free'}
-                      <input
-                        type="date" aria-label={$t('admin.expiry')} disabled={busy === user.id}
-                        value={pendingExpiry[user.id] ?? isoDate(user.planExpiresAt)}
-                        onchange={(e) => { pendingExpiry[user.id] = e.currentTarget.value; patchPlan(user); }}
-                        class="rounded border border-gray-300 px-2 py-1 text-sm" />
+                      <form class="flex items-center gap-1" onsubmit={(e) => { e.preventDefault(); patchPlan(user); }}>
+                        <input
+                          type="date" aria-label={$t('admin.expiry')} disabled={busy === user.id}
+                          min={todayISO}
+                          value={pendingExpiry[user.id] ?? isoDate(user.planExpiresAt)}
+                          oninput={(e) => { pendingExpiry[user.id] = e.currentTarget.value; }}
+                          class="rounded border border-gray-300 px-2 py-1 text-sm" />
+                        {#if expiryDirty(user)}
+                          <button type="submit" aria-label={$t('admin.apply')} disabled={busy === user.id}
+                            class="rounded bg-blue-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-600 disabled:opacity-40">✓</button>
+                        {/if}
+                      </form>
                     {:else}
                       <span class="text-xs text-gray-300">—</span>
                     {/if}
