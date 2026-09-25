@@ -1768,5 +1768,6 @@
   "sub.currentPlan": "Plano atual",
   "sub.soon": "Ainda indisponível",
   "sub.start": "Começar",
-  "admin.apply": "Aplicar alteração"
+  "admin.apply": "Aplicar alteração",
+  "account.planExpiry": "Plano expira"
 }

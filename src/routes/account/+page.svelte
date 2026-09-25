@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t, locale, type TranslationKey } from '$lib/i18n';
+  import { t, locale, intlLocale, type TranslationKey } from '$lib/i18n';
   import { authMessage } from '$lib/i18n/authMessages';
   import { goto, invalidateAll } from '$app/navigation';
   import { base } from '$app/paths';
@@ -103,6 +103,12 @@
               <dt class="text-gray-500">{$t('account.plan')}</dt>
               <dd class="font-medium text-gray-800">{user?.plan ?? 'free'}</dd>
             </div>
+            {#if user && user.plan !== 'free' && user.planExpiresAt}
+              <div class="flex justify-between gap-4">
+                <dt class="text-gray-500">{$t('account.planExpiry')}</dt>
+                <dd class="font-medium text-gray-800">{new Date(user.planExpiresAt).toLocaleDateString(intlLocale($locale))}</dd>
+              </div>
+            {/if}
             <div class="flex justify-between gap-4">
               <dt class="text-gray-500">{$t('account.storageLimit')}</dt>
               <dd class="font-medium text-gray-800">

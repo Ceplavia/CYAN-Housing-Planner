@@ -1768,5 +1768,6 @@
   "sub.currentPlan": "目前計劃",
   "sub.soon": "暫不可用",
   "sub.start": "開始使用",
-  "admin.apply": "套用計劃變更"
+  "admin.apply": "套用計劃變更",
+  "account.planExpiry": "計劃到期日"
 }
