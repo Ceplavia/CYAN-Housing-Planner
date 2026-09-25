@@ -165,7 +165,7 @@ for (const locale of ['en', 'pt']) for (const width of [1440, 390]) test(`${loca
   await page.keyboard.press('Tab'); await focusInside(page, locale === 'pt' ? 'Importar RoomPlan' : 'Import RoomPlan');
   await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
   expect(await storedRecords(page)).toEqual(before);
-  await page.goto('/');
+  await page.goto('/dashboard');
   await page.getByRole('button', { name: locale === 'pt' ? 'Modelos' : 'Templates', exact: true }).press('Enter');
   const templates = await focusInside(page, locale === 'pt' ? 'Modelos de Planta Baixa' : 'Floor Plan Templates');
   await page.keyboard.press('Shift+Tab'); await focusInside(page, locale === 'pt' ? 'Modelos de Planta Baixa' : 'Floor Plan Templates');

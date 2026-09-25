@@ -2,6 +2,9 @@
   import { t } from '$lib/i18n';
   import { base } from '$app/paths';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
+  import AccountMenu from '$lib/components/AccountMenu.svelte';
+
+  let { data } = $props();
 
   const screenshots = ['plan1_2d.jpg', 'plan1_3d.jpg', 'plan4_2d.jpg', 'plan4_3d.jpg'];
   const features = [
@@ -17,18 +20,22 @@
 <div class="min-h-screen bg-gray-50">
   <!-- Header -->
   <SiteHeader>
-    <a href={`${base}/subscription`}
-      class="px-4 py-2.5 text-white/80 hover:text-white font-medium text-sm transition-colors">
-      {$t('nav.pricing')}
-    </a>
-    <a href={`${base}/login`}
-      class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20">
-      {$t('auth.signIn')}
-    </a>
-    <a href={`${base}/register`}
-      class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40">
-      {$t('auth.signUp')}
-    </a>
+    {#if data.user}
+      <AccountMenu username={data.user.username} isAdmin={data.user.isAdmin} />
+    {:else}
+      <a href={`${base}/subscription`}
+        class="px-4 py-2.5 text-white/80 hover:text-white font-medium text-sm transition-colors">
+        {$t('nav.pricing')}
+      </a>
+      <a href={`${base}/login`}
+        class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20">
+        {$t('auth.signIn')}
+      </a>
+      <a href={`${base}/register`}
+        class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40">
+        {$t('auth.signUp')}
+      </a>
+    {/if}
   </SiteHeader>
 
   <!-- Hero -->
@@ -36,14 +43,16 @@
     <h2 class="text-4xl font-bold text-slate-800 tracking-tight">{$t('landing.hero')}</h2>
     <p class="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">{$t('landing.heroSub')}</p>
     <div class="mt-8 flex items-center justify-center gap-3">
-      <a href={`${base}/register`}
+      <a href={data.user ? `${base}/dashboard` : `${base}/register`}
         class="px-7 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold shadow-lg shadow-blue-600/25 transition-all">
         {$t('landing.ctaStart')}
       </a>
-      <a href={`${base}/login`}
-        class="px-7 py-3 bg-white text-gray-700 rounded-xl hover:bg-gray-100 font-semibold border border-gray-200 transition-all">
-        {$t('landing.ctaSignIn')}
-      </a>
+      {#if !data.user}
+        <a href={`${base}/login`}
+          class="px-7 py-3 bg-white text-gray-700 rounded-xl hover:bg-gray-100 font-semibold border border-gray-200 transition-all">
+          {$t('landing.ctaSignIn')}
+        </a>
+      {/if}
     </div>
   </div>
 

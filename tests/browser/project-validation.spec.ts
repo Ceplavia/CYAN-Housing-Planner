@@ -79,7 +79,7 @@ for (const width of [1440, 390]) {
 test('welcome import recovers from a damaged file and accepts missing legacy fields', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   const check = observe(page);
-  await page.goto('/');
+  await page.goto('/dashboard');
   const importButton = page.getByRole('button', { name: /Import a Plan/ });
   const pending = page.waitForEvent('filechooser'); await importButton.click();
   await (await pending).setFiles(damagedFixture);
@@ -145,7 +145,7 @@ test('a damaged version stays available for backup and cannot replace the curren
 
 test('welcome import accepts the advertised iPhone RoomPlan JSON locally', async ({ page }) => {
   const check = observe(page);
-  await page.goto('/');
+  await page.goto('/dashboard');
   const pending = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: /Import a Plan/ }).click();
   await (await pending).setFiles(resolve('tests/fixtures/roomplan-scan.json'));

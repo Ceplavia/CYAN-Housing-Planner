@@ -73,7 +73,7 @@ test('password gate blocks, then admits, the visitor', async ({ page, browser })
 test('share dialog generates, edits, regenerates and revokes the link', async ({ page, browser }) => {
   const p = sharedProject('dialog-plan');
   await seedProject(page, p);
-  await page.goto('/');
+  await page.goto('/dashboard');
   const card = page.locator('.group', { hasText: 'Harbour Flat' });
   await card.hover();
   await card.getByRole('button', { name: /Project actions for Harbour Flat/ }).click();

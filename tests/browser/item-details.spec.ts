@@ -17,7 +17,7 @@ async function choose(page: Page, button: string, path: string) {
   await (await pending).setFiles(path);
 }
 async function openPackage(page: Page, path = fixture) {
-  await page.goto('/'); await page.getByRole('button', { name: 'Import a project package', exact: true }).click();
+  await page.goto('/dashboard'); await page.getByRole('button', { name: 'Import a project package', exact: true }).click();
   await choose(page, 'Choose project package', path);
   await page.getByRole('button', { name: 'Import as copy', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('status')).toContainText('Project imported.');

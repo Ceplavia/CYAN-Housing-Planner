@@ -94,7 +94,7 @@ test('deleting a library project cannot be undone by an older editor autosave', 
   const check = observe(page), checkLibrary = observe(library);
   await page.goto(`/editor?id=${source.id}`);
   await expect(page.getByRole('application')).toContainText('1 room');
-  await library.goto('/');
+  await library.goto('/dashboard');
   await library.getByRole('button', { name: `Project actions for ${source.name}`, exact: true }).click();
   await library.getByRole('menuitem', { name: 'Delete', exact: true }).click();
   await library.getByRole('dialog', { name: 'Delete project', exact: true }).getByRole('button', { name: 'Delete project', exact: true }).click();

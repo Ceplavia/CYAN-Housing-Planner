@@ -26,7 +26,7 @@ for (const mode of ['missing', 'saved', 'read failure'] as const) {
       }));
     }
     await page.addInitScript(() => localStorage.setItem('hasSeenWelcome', 'true'));
-    await page.goto('/');
+    await page.goto('/dashboard');
     for (const id of ids) {
       const card = page.getByRole('link', { name: `Open Preview ${id}`, exact: true });
       await expect(card).toBeVisible();

@@ -13,7 +13,7 @@ async function seed(page: Page) {
   await page.addInitScript(() => {
     localStorage.setItem('hasSeenWelcome', 'true');
   });
-  await page.goto('/');
+  await page.goto('/dashboard');
   await expect(page.getByRole('link', { name: project.name, exact: true })).toBeVisible();
   return project;
 }

@@ -1,8 +1,5 @@
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-// Signed-in users land on the dashboard; anonymous visitors see the
-// product landing page.
-export const load: PageServerLoad = ({ locals }) => {
-  if (locals.user) redirect(303, '/dashboard');
-};
+// The landing page is public for everyone — signed-in users see it too
+// (their header swaps to the account menu; CTAs point at the dashboard).
+export const load: PageServerLoad = () => {};

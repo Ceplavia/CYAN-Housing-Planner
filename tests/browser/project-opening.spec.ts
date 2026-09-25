@@ -171,7 +171,7 @@ test('leaving the editor cancels a slow import before it can replace a library p
 
 test('welcome and library templates create independent saved projects', async ({ page }) => {
   const check = observe(page);
-  await page.goto('/');
+  await page.goto('/dashboard');
   await page.getByRole('button', { name: /Use a Template/ }).click();
   await page.getByRole('button', { name: /Studio Apartment/ }).click();
   await expect(page.getByRole('application')).toContainText('walls');

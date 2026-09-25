@@ -64,7 +64,7 @@ for (const width of [1440, 390]) {
     test.slow();
     await page.setViewportSize({ width, height: 900 });
     const check = observe(page), source = await seed(page);
-    await page.goto('/'); await expect(page.getByRole('link', { name: source.name, exact: true })).toBeVisible();
+    await page.goto('/dashboard'); await expect(page.getByRole('link', { name: source.name, exact: true })).toBeVisible();
     const before = await storedRecords(page);
     const dialog = await openRestoreDialog(page);
     await chooseBackup(page);
@@ -76,7 +76,7 @@ for (const width of [1440, 390]) {
     await dialog.getByRole('button', { name: 'Restore as copies', exact: true }).click();
     await expect(dialog.getByRole('status')).toContainText('1 project restored.');
     await dialog.getByRole('button', { name: 'Done', exact: true }).click();
-    await page.goto('/');
+    await page.goto('/dashboard');
     await expect(page.getByRole('link', { name: `${source.name} (Restored copy)`, exact: true })).toBeVisible();
     const saved = await savedProjects(page), copy = Object.values(saved).find((p: any) => p.id !== source.id) as any;
     expect(saved[source.id]).toEqual(source); expect(copy.id).not.toBe(source.id);
@@ -87,7 +87,7 @@ for (const width of [1440, 390]) {
     const recovery: any = Object.values(backup.recovery).map(raw => JSON.parse(raw as string)).find(r => r.projects['damaged-plan']);
     expect(recovery.projects['damaged-plan']).toBe('{original damaged project bytes');
     expect(recovery.history[source.id]).toContain('{original damaged version bytes');
-    await page.goto('/');
+    await page.goto('/dashboard');
     await page.getByRole('link', { name: copy.name, exact: true }).click();
     if (width < 768) await page.getByRole('button', { name: 'More actions', exact: true }).click();
     await page.getByRole('button', { name: 'Version History', exact: true }).click();
@@ -108,7 +108,7 @@ for (const width of [1440, 390]) {
 
 test('failed restores roll back entirely and keep the original file available for retry', async ({ page }) => {
   const check = observe(page), source = await seed(page);
-  await page.goto('/'); await expect(page.getByRole('link', { name: source.name, exact: true })).toBeVisible();
+  await page.goto('/dashboard'); await expect(page.getByRole('link', { name: source.name, exact: true })).toBeVisible();
   const before = await storedRecords(page);
   await openRestoreDialog(page);
   await chooseBackup(page);
@@ -143,7 +143,7 @@ test('a cancelled file read cannot replace a newer preview or affect another edi
   await page.getByTitle('Click to rename', { exact: true }).click();
   await page.getByRole('textbox', { name: 'Project name' }).fill('Pending editor work');
   await page.getByRole('textbox', { name: 'Project name' }).press('Enter');
-  await library.goto('/');
+  await library.goto('/dashboard');
   await openRestoreDialog(library);
   await library.evaluate(() => {
     const text = File.prototype.text;
@@ -176,7 +176,7 @@ test('restoration keeps damaged backup entries as recovery data and restores the
   const damaged = JSON.parse(await readFile(file, 'utf8'));
   damaged.projects['damaged-entry'] = '{damaged destination library';
   await page.addInitScript(() => { localStorage.setItem('hasSeenWelcome', 'true'); });
-  await page.goto('/'); await expect(page.getByRole('link', { name: /Restored copy/ })).toHaveCount(0);
+  await page.goto('/dashboard'); await expect(page.getByRole('link', { name: /Restored copy/ })).toHaveCount(0);
   await openRestoreDialog(page);
   const pending = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Choose backup file', exact: true }).click();
@@ -187,7 +187,7 @@ test('restoration keeps damaged backup entries as recovery data and restores the
   const backup = await libraryBackup(page);
   const archive = Object.values(backup.recovery).map(raw => JSON.parse(raw as string)).find((r: any) => r.projects['damaged-entry']);
   expect(archive.projects['damaged-entry']).toBe('{damaged destination library');
-  await page.goto('/'); await expect(page.getByRole('link', { name: 'QA Library Restore (Restored copy)', exact: true })).toBeVisible();
+  await page.goto('/dashboard'); await expect(page.getByRole('link', { name: 'QA Library Restore (Restored copy)', exact: true })).toBeVisible();
   check();
 });
 
@@ -195,7 +195,7 @@ test('welcome restoration accepts a large legacy backup with embedded images ent
   const check = observe(page), project = await sourceProject();
   project.extensions.image = 'data:image/png;base64,' + 'A'.repeat(6 * 1024 * 1024);
   project.floors[0].backgroundImage = { dataUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', position: { x: 0, y: 0 }, scale: 1, opacity: 0.5, rotation: 0, locked: true };
-  await page.goto('/'); await openRestoreDialog(page, 'Restore a library backup');
+  await page.goto('/dashboard'); await openRestoreDialog(page, 'Restore a library backup');
   const pending = page.waitForEvent('filechooser'); await page.getByRole('button', { name: 'Choose backup file', exact: true }).click();
   await (await pending).setFiles({ name: 'large-legacy.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ [project.id]: JSON.stringify(project) })) });
   await expect(page.getByRole('dialog')).toContainText('1 project ready to restore');
@@ -212,7 +212,7 @@ test('welcome restoration accepts a large legacy backup with embedded images ent
 
 test('recovery-only data stays downloadable from an otherwise empty library', async ({ page }) => {
   const check = observe(page);
-  await page.goto('/'); await openRestoreDialog(page, 'Restore a library backup');
+  await page.goto('/dashboard'); await openRestoreDialog(page, 'Restore a library backup');
   const pending = page.waitForEvent('filechooser'); await page.getByRole('button', { name: 'Choose backup file', exact: true }).click();
   await (await pending).setFiles({ name: 'damaged-projects.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ damaged: '{original damaged project bytes' })) });
   await expect(page.getByRole('dialog')).toContainText('0 projects ready to restore');
@@ -230,7 +230,7 @@ test('recovery-only data stays downloadable from an otherwise empty library', as
 
 test('a list refresh failure after commit does not offer to repeat a successful restore', async ({ page }) => {
   const source = await seed(page), check = observe(page);
-  await page.goto('/'); await expect(page.getByRole('link', { name: source.name, exact: true })).toBeVisible();
+  await page.goto('/dashboard'); await expect(page.getByRole('link', { name: source.name, exact: true })).toBeVisible();
   await openRestoreDialog(page); await chooseBackup(page);
   (globalThis as any).__failRefresh = true;
   await page.route(/\/api\/projects$/, route =>
@@ -243,7 +243,7 @@ test('a list refresh failure after commit does not offer to repeat a successful 
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   // Back on the library, the still-failing list shows the error banner — yet
   // the committed copy is safe on the server.
-  await page.goto('/');
+  await page.goto('/dashboard');
   await expect(page.getByRole('alert')).toContainText('Could not refresh');
   (globalThis as any).__failRefresh = false;
   await page.reload();
