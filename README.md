@@ -21,6 +21,7 @@ Forked from the MIT-licensed [openplan3d](https://github.com/laanlabs/openPlan3D
 - **Server-side library** — projects, thumbnails, version history and recovery data live in a SQLite file under `DATA_DIR`; nothing is kept in the browser
 - **Sign-up / sign-in** with cookie sessions; users only ever see their own plans
 - **Per-user project quota** — plan base allowance + admin-granted bonus slots
+- **Share links** — per-project public links with optional password and 1/7/30-day expiry; regenerate or revoke anytime from the project menu
 - **Admin console** (`/admin`) — activate/deactivate accounts (with a reason shown at sign-in), change plans, grant bonus slots, promote admins
 
 ### Drawing tools

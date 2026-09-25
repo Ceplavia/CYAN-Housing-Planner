@@ -314,13 +314,21 @@ export async function exportAsPNG(canvas: HTMLCanvasElement | null, project?: Pr
 export { downloadProjectJSON as exportAsJSON } from './projectBackup';
 
 export function exportAsSVG(project: Project, language: Locale = 'en') {
+  const svg = projectToSVG(project, language);
+  if (!svg) return;
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  download(blob, `${project.name || 'floorplan'}.svg`);
+}
+
+/** The plan rendered as an SVG document — shared by file export and the share viewer. */
+export function projectToSVG(project: Project, language: Locale = 'en'): string | null {
   const floor = project.floors.find(f => f.id === project.activeFloorId) ?? project.floors[0];
-  if (!floor) return;
+  if (!floor) return null;
   const entourage=(floor.entourage ?? []).flatMap(item=>{
     const def=getEntourageDef(item.defId), custom=def?undefined:project.customEntourage?.find(d=>d.id===item.defId);
     return def || custom ? [{item,def,custom,aspect:def?.aspect ?? custom!.aspect}] : [];
   });
-  if (!hasPlanExportContent(floor) && !entourage.length) return;
+  if (!hasPlanExportContent(floor) && !entourage.length) return null;
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const w of floor.walls) {
@@ -631,13 +639,10 @@ export function exportAsSVG(project: Project, language: Locale = 'en') {
     }
   }
 
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vw} ${vh}" width="${vw}" height="${vh}">
   <rect width="100%" height="100%" fill="white"/>
 ${paths}</svg>`;
-
-  const blob = new Blob([svg], { type: 'image/svg+xml' });
-  download(blob, `${project.name || 'floorplan'}.svg`);
 }
 
 export function exportAs3DPNG(renderer: { domElement: HTMLCanvasElement }) {

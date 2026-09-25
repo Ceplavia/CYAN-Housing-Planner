@@ -63,6 +63,16 @@ export function database(): DatabaseSync {
           data TEXT NOT NULL,
           PRIMARY KEY (user_id, id)
         );
+        CREATE TABLE IF NOT EXISTS shares (
+          token TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          project_id TEXT NOT NULL,
+          password TEXT,
+          expires_at INTEGER,
+          created_at INTEGER NOT NULL,
+          UNIQUE (user_id, project_id),
+          FOREIGN KEY (user_id, project_id) REFERENCES projects(user_id, id) ON DELETE CASCADE
+        );
       `);
     } else {
       // v1 → v2: plan/bonus quota model, activation flag, admin flag. Column
@@ -74,7 +84,24 @@ export function database(): DatabaseSync {
       if (!columns.has('inactive_reason')) db.exec('ALTER TABLE users ADD COLUMN inactive_reason TEXT');
       if (columns.has('project_limit')) db.exec('ALTER TABLE users DROP COLUMN project_limit');
     }
-    db.exec('PRAGMA user_version = 2');
+    // v2 → v3: per-project share links. One row per project, revocable,
+    // optionally password-protected, dying with the project via cascade.
+    const hasShares = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='shares'").get() !== undefined;
+    if (!hasShares) {
+      db.exec(`
+        CREATE TABLE shares (
+          token TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          project_id TEXT NOT NULL,
+          password TEXT,
+          expires_at INTEGER,
+          created_at INTEGER NOT NULL,
+          UNIQUE (user_id, project_id),
+          FOREIGN KEY (user_id, project_id) REFERENCES projects(user_id, id) ON DELETE CASCADE
+        );
+      `);
+    }
+    db.exec('PRAGMA user_version = 3');
   }
   return db;
 }

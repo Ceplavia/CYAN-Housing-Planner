@@ -14,6 +14,7 @@
   import LibraryRestoreDialog from '$lib/components/LibraryRestoreDialog.svelte';
   import ProjectPackageDialog from '$lib/components/ProjectPackageDialog.svelte';
   import ProjectActionsMenu from '$lib/components/ProjectActionsMenu.svelte';
+  import ShareDialog from '$lib/components/ShareDialog.svelte';
   import { houseTemplates } from '$lib/utils/houseTemplates';
 
   let { data } = $props();
@@ -29,6 +30,7 @@
   let packageOpen = $state(false);
   let loading = $state(true);
   let actionDialog = $state<{ type: 'rename' | 'delete'; id: string; name: string } | null>(null);
+  let shareTarget = $state<{ id: string; name: string } | null>(null);
   let renameValue = $state('');
   let actionError = $state<string | null>(null);
   let actionBusy = $state(false);
@@ -297,6 +299,7 @@
             <ProjectActionsMenu name={project.name} disabled={duplicating}
               onaction={(action) => {
                 if (action === 'open') goto(`${base}/editor?id=${encodeURIComponent(project.id)}`);
+                else if (action === 'share') shareTarget = { id: project.id, name: project.name };
                 else if (action === 'duplicate') void duplicateProject(project.id);
                 else openAction(action, project);
               }} />
@@ -333,6 +336,10 @@
         </div>
       </form>
     </dialog>
+  {/if}
+
+  {#if shareTarget}
+    <ShareDialog projectId={shareTarget.id} projectName={shareTarget.name} onclose={() => shareTarget = null} />
   {/if}
 
   <!-- Template Modal -->

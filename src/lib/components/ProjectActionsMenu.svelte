@@ -5,13 +5,13 @@
   let { name, disabled = false, onaction }: {
     name: string;
     disabled?: boolean;
-    onaction: (action: 'open' | 'rename' | 'duplicate' | 'delete') => void;
+    onaction: (action: 'open' | 'share' | 'rename' | 'duplicate' | 'delete') => void;
   } = $props();
   const id = $props.id();
   let open = $state(false);
   let trigger = $state<HTMLButtonElement>();
   let menu = $state<HTMLDivElement>();
-  const actions = ['open', 'rename', 'duplicate', 'delete'] as const;
+  const actions = ['open', 'share', 'rename', 'duplicate', 'delete'] as const;
 
   function close(restore = false) {
     open = false;
