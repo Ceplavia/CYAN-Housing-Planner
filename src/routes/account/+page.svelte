@@ -6,7 +6,7 @@
   import { onMount } from 'svelte';
   import { sessionQuota, refreshSessionQuota } from '$lib/services/session';
   import { downloadActiveLibraryBackup } from '$lib/services/datastore';
-  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import SiteHeader from '$lib/components/SiteHeader.svelte';
   import LibraryRestoreDialog from '$lib/components/LibraryRestoreDialog.svelte';
   import ProjectPackageDialog from '$lib/components/ProjectPackageDialog.svelte';
 
@@ -65,17 +65,11 @@
 </script>
 
 <div class="min-h-screen bg-gray-50">
-  <div class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
-    <div class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-      <a href={`${base}/dashboard`} class="text-2xl font-bold text-white">CYAN Housing Planner</a>
-      <div class="flex items-center gap-3">
-        <LanguageSwitcher />
-        <a href={`${base}/dashboard`} class="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20">
-          {$t('account.back')}
-        </a>
-      </div>
-    </div>
-  </div>
+  <SiteHeader>
+    <a href={`${base}/dashboard`} class="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20">
+      {$t('account.back')}
+    </a>
+  </SiteHeader>
 
   <div class="max-w-4xl mx-auto px-6 py-10 md:flex md:gap-8">
     <!-- Left tab navigation -->

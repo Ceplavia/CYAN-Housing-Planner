@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from '$lib/i18n';
   import { base } from '$app/paths';
-  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import SiteHeader from '$lib/components/SiteHeader.svelte';
 
   const screenshots = ['plan1_2d.jpg', 'plan1_3d.jpg', 'plan4_2d.jpg', 'plan4_3d.jpg'];
   const features = [
@@ -16,25 +16,16 @@
 
 <div class="min-h-screen bg-gray-50">
   <!-- Header -->
-  <div class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
-    <div class="max-w-5xl mx-auto px-6 py-5 flex flex-wrap gap-4 items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-white">CYAN Housing Planner</h1>
-        <p class="text-sm text-white/50 mt-0.5">{$t('landing.tagline')}</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <a href={`${base}/login`}
-          class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20">
-          {$t('auth.signIn')}
-        </a>
-        <a href={`${base}/register`}
-          class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40">
-          {$t('auth.signUp')}
-        </a>
-        <LanguageSwitcher />
-      </div>
-    </div>
-  </div>
+  <SiteHeader>
+    <a href={`${base}/login`}
+      class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20">
+      {$t('auth.signIn')}
+    </a>
+    <a href={`${base}/register`}
+      class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40">
+      {$t('auth.signUp')}
+    </a>
+  </SiteHeader>
 
   <!-- Hero -->
   <div class="max-w-5xl mx-auto px-6 pt-16 pb-10 text-center">

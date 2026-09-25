@@ -3,7 +3,7 @@
   import { authMessage } from '$lib/i18n/authMessages';
   import { goto, invalidateAll } from '$app/navigation';
   import { base } from '$app/paths';
-  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import SiteHeader from '$lib/components/SiteHeader.svelte';
 
   let { data } = $props();
 
@@ -35,12 +35,12 @@
 </script>
 
 <div class="min-h-screen bg-gray-50">
-  <div class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
-    <div class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-      <a href={`${base}/`} class="text-2xl font-bold text-white">CYAN Housing Planner</a>
-      <LanguageSwitcher />
-    </div>
-  </div>
+  <SiteHeader>
+    <a href={`${base}/register`}
+      class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40">
+      {$t('auth.signUp')}
+    </a>
+  </SiteHeader>
 
   <div class="max-w-5xl mx-auto px-6 py-16">
     <div class="mx-auto max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
