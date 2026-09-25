@@ -8,7 +8,10 @@ export async function POST({ request, cookies, getClientAddress }) {
   }
   try {
     const body = await request.json();
-    const user = verifyUser(String(body?.username ?? ''), String(body?.password ?? ''));
+    // Clients send passwordHash — a sha256 digest of the password, never the
+    // password itself. Plain `password` fields are rejected by the digest
+    // format check inside verifyUser.
+    const user = verifyUser(String(body?.username ?? ''), String(body?.passwordHash ?? ''));
     const { token } = createSession(user.id);
     // adapter-node reports url.protocol as https unless PROTOCOL_HEADER/ORIGIN
     // is configured, so trust the real forwarded scheme instead — a Secure

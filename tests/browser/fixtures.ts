@@ -1,4 +1,5 @@
 import { test as base, expect, type APIRequest, type APIRequestContext, type BrowserContext } from '@playwright/test';
+import { passwordDigest } from '../../src/lib/passwordDigest';
 
 export const TEST_PASSWORD = 'e2e-test-password';
 export const BASE = 'http://127.0.0.1:4188';
@@ -6,7 +7,7 @@ export const BASE = 'http://127.0.0.1:4188';
 export async function registerAccount(request: APIRequest): Promise<APIRequestContext> {
   const api = await request.newContext();
   const username = `e2e_${crypto.randomUUID().replace(/-/g, '').slice(0, 24)}`;
-  const res = await api.post(`${BASE}/api/auth/register`, { data: { username, password: TEST_PASSWORD } });
+  const res = await api.post(`${BASE}/api/auth/register`, { data: { username, passwordHash: await passwordDigest(TEST_PASSWORD) } });
   if (!res.ok()) throw new Error(`e2e register failed: ${res.status()} ${await res.text()}`);
   return api;
 }

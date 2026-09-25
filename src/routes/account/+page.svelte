@@ -7,6 +7,7 @@
   import { sessionQuota, refreshSessionQuota } from '$lib/services/session';
   import { downloadActiveLibraryBackup } from '$lib/services/datastore';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
+  import { passwordDigest } from '$lib/passwordDigest';
   import LibraryRestoreDialog from '$lib/components/LibraryRestoreDialog.svelte';
   import ProjectPackageDialog from '$lib/components/ProjectPackageDialog.svelte';
 
@@ -39,7 +40,7 @@
       const res = await fetch(`${base}/api/auth/password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ current, next }),
+        body: JSON.stringify({ currentHash: await passwordDigest(current), nextHash: await passwordDigest(next) }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) { passwordError = body?.error ?? $t('auth.error.passwordFailed'); return; }

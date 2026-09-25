@@ -1,8 +1,12 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { roomProject } from './fixtures/project';
+
+// Server auth now takes the client-computed digest, not the raw password.
+const dg = (p: string) => createHash('sha256').update(`cyan-housing-planner:v1:${p}`).digest('hex');
 
 // Point storage at a throwaway directory before any server module opens it.
 const dataDir = mkdtempSync(join(tmpdir(), 'cyan-server-test-'));
@@ -19,31 +23,31 @@ afterAll(() => {
 
 describe('server auth', () => {
   it('registers, signs in, and rejects bad credentials and duplicates', () => {
-    const user = createUser('Ada', 'correct horse battery');
+    const user = createUser('Ada', dg('correct horse battery'));
     expect(user.username).toBe('Ada');
-    expect(() => createUser('ada', 'another password')).toThrow(AuthError); // case-insensitive uniqueness
-    expect(() => verifyUser('Ada', 'wrong password')).toThrow(AuthError);
-    expect(verifyUser('ada', 'correct horse battery').id).toBe(user.id); // case-insensitive sign-in
-    expect(() => createUser('x', 'short')).toThrow(AuthError);
-    expect(() => createUser('bad name!', 'a long enough password')).toThrow(AuthError);
+    expect(() => createUser('ada', dg('another password'))).toThrow(AuthError); // case-insensitive uniqueness
+    expect(() => verifyUser('Ada', dg('wrong password'))).toThrow(AuthError);
+    expect(verifyUser('ada', dg('correct horse battery')).id).toBe(user.id); // case-insensitive sign-in
+    expect(() => createUser('x', dg('short'))).toThrow(AuthError);
+    expect(() => createUser('bad name!', dg('a long enough password'))).toThrow(AuthError);
   });
 
   it('creates sessions, resolves them to users, and clears others on password change', () => {
-    const user = createUser('Grace', 'first password ok');
+    const user = createUser('Grace', dg('first password ok'));
     const a = createSession(user.id), b = createSession(user.id);
     expect(sessionUser(a.token)?.id).toBe(user.id);
     expect(sessionUser('missing-token')).toBeNull();
-    changePassword(user.id, 'first password ok', 'second password ok', a.token);
+    changePassword(user.id, dg('first password ok'), dg('second password ok'), a.token);
     expect(sessionUser(a.token)?.id).toBe(user.id); // the session that proved the old password stays
     expect(sessionUser(b.token)).toBeNull();        // other sessions sign out
-    expect(verifyUser('Grace', 'second password ok').id).toBe(user.id);
+    expect(verifyUser('Grace', dg('second password ok')).id).toBe(user.id);
   });
 });
 
 describe('server project storage', () => {
   it('stores per-user projects with revision checks and enforces the plan limit', async () => {
-    const owner = createUser('Linus', 'storage password');
-    const other = createUser('Margaret', 'storage password');
+    const owner = createUser('Linus', dg('storage password'));
+    const other = createUser('Margaret', dg('storage password'));
     const project = { ...roomProject(), id: 'shared-looking-id', name: 'House' };
     const raw = JSON.stringify(project);
 
@@ -62,7 +66,7 @@ describe('server project storage', () => {
     expect(lib.listProjects(owner.id)[0]).toMatchObject({ id: project.id, name: 'House', revision: 2 });
 
     // The per-user limit blocks creation but never updates.
-    const limited = createUser('Case', 'storage password');
+    const limited = createUser('Case', dg('storage password'));
     process.env.MAX_PROJECTS_PER_USER = '1';
     try {
       expect(() => lib.saveProject(limited, 'p1', JSON.stringify({ ...project, id: 'p1' }), null)).not.toThrow();
@@ -83,7 +87,7 @@ describe('server project storage', () => {
   });
 
   it('stores thumbnails, history and deletes them with the project', () => {
-    const user = createUser('Nadia', 'storage password');
+    const user = createUser('Nadia', dg('storage password'));
     lib.saveProject(user, 'p', JSON.stringify({ ...roomProject(), id: 'p' }), null);
     lib.saveThumbnail(user.id, 'p', 'data:image/png;base64,AAAA');
     lib.saveThumbnail(user.id, 'p', 'not a data url'); // rejected
@@ -105,7 +109,7 @@ describe('server project storage', () => {
 
 describe('server library backup and restore', () => {
   it('round-trips the openplan3d-library format and enforces the limit atomically', async () => {
-    const user = createUser('Restorer', 'storage password');
+    const user = createUser('Restorer', dg('storage password'));
     const project = { ...roomProject(), id: 'src', name: 'My House' };
     lib.saveProject(user, 'src', JSON.stringify(project), null);
     lib.saveThumbnail(user.id, 'src', 'data:image/png;base64,AAAA');
@@ -127,7 +131,7 @@ describe('server library backup and restore', () => {
     expect(JSON.parse(lib.getHistory(user.id, copyId)!)[0].description).toBe('v');
 
     // A quota breach mid-restore rolls the whole restore back.
-    const limited = createUser('Quota', 'storage password');
+    const limited = createUser('Quota', dg('storage password'));
     process.env.MAX_PROJECTS_PER_USER = '1';
     try {
       const two = JSON.stringify({

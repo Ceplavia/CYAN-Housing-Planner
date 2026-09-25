@@ -7,7 +7,10 @@ import { roomProject } from './fixtures/project';
 const dataDir = mkdtempSync(join(tmpdir(), 'cyan-share-test-'));
 process.env.DATA_DIR = dataDir;
 
+import { createHash } from 'node:crypto';
 const { database, resetDatabaseForTests } = await import('$lib/server/db');
+// Server auth now takes the client-computed digest, not the raw password.
+const dg = (p: string) => createHash('sha256').update(`cyan-housing-planner:v1:${p}`).digest('hex');
 const { createUser } = await import('$lib/server/auth');
 const lib = await import('$lib/server/userLibrary');
 const shares = await import('$lib/server/shares');
@@ -25,7 +28,7 @@ function project(user: { id: string; bonusProjects: number; plan: string }, id =
 
 describe('share links', () => {
   it('creates one 12-char link per project and blocks a second', () => {
-    const user = createUser('Sharer', 'a long enough password');
+    const user = createUser('Sharer', dg('a long enough password'));
     project(user);
     const share = shares.createShare(user.id, 'plan-1', { password: 'pw', expiresAt: Date.now() + 1000 });
     expect(share.token).toMatch(/^[A-Za-z0-9]{12}$/);
@@ -36,7 +39,7 @@ describe('share links', () => {
   });
 
   it('resolves password-less and password-protected shares publicly', () => {
-    const user = createUser('Opener', 'a long enough password');
+    const user = createUser('Opener', dg('a long enough password'));
     project(user, 'open');
     const free = shares.createShare(user.id, 'open');
     expect(shares.resolveShare(free.token)).toMatchObject({ status: 'ok', name: 'Harbour Flat', owner: 'Opener' });
@@ -51,7 +54,7 @@ describe('share links', () => {
   });
 
   it('enforces expiry, and supports edits, regeneration and revoke', () => {
-    const user = createUser('Timer', 'a long enough password');
+    const user = createUser('Timer', dg('a long enough password'));
     project(user, 'timed');
     const share = shares.createShare(user.id, 'timed');
 
@@ -78,7 +81,7 @@ describe('share links', () => {
   });
 
   it('dies with the project via cascade', () => {
-    const user = createUser('Cascade', 'a long enough password');
+    const user = createUser('Cascade', dg('a long enough password'));
     project(user, 'doomed');
     const share = shares.createShare(user.id, 'doomed');
     expect(shares.resolveShare(share.token).status).toBe('ok');
@@ -87,8 +90,8 @@ describe('share links', () => {
   });
 
   it('never exposes another user\'s share settings', () => {
-    const a = createUser('Alice', 'a long enough password');
-    const b = createUser('Bob', 'a long enough password');
+    const a = createUser('Alice', dg('a long enough password'));
+    const b = createUser('Bob', dg('a long enough password'));
     project(a, 'hers');
     shares.createShare(a.id, 'hers', { password: 'keep' });
     // Bob has no project 'hers' and cannot see or edit Alice's share row.

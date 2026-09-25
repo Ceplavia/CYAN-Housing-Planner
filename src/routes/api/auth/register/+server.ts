@@ -9,7 +9,7 @@ export async function POST({ request, cookies, getClientAddress }) {
   }
   try {
     const body = await request.json();
-    const user = createUser(String(body?.username ?? ''), String(body?.password ?? ''));
+    const user = createUser(String(body?.username ?? ''), String(body?.passwordHash ?? ''));
     const { token } = createSession(user.id);
     setSessionCookie(cookies, token, request.headers.get('x-forwarded-proto') === 'https');
     return json({ username: user.username }, { status: 201 });

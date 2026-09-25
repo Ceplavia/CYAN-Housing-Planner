@@ -69,8 +69,8 @@ Open http://localhost:3000, sign in as the admin account (created from the env v
 |---|---|---|
 | `PORT` | `3000` | Listen port inside the container |
 | `DATA_DIR` | `/data` (`data/` outside Docker) | SQLite database directory |
-| `ADMIN_USERNAME` | — | With `ADMIN_PASSWORD`, grants admin to this user at startup when no admin exists (creates the account if needed) |
-| `ADMIN_PASSWORD` | — | Password for the bootstrapped admin account |
+| `ADMIN_USERNAME` | — | With `ADMIN_PASSWORD`, ensures this user exists as an admin at every boot — also the password-reset path for that account |
+| `ADMIN_PASSWORD` | — | The env admin's password; rotated into the DB on each boot while set |
 | `MAX_PROJECTS_PER_USER` | `50` | Base project quota of the `free` plan |
 | `REGISTRATION_OPEN` | `true` | `false` closes public sign-ups |
 | `AUTH_RATE_LIMIT` | `20` per minute per IP | Login/register attempts cap; `0` disables |

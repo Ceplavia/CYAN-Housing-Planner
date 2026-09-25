@@ -1,11 +1,12 @@
 import { test, expect, registerAccount, signIn, TEST_PASSWORD, BASE } from './fixtures';
 import type { APIRequestContext, APIRequest } from '@playwright/test';
+import { passwordDigest } from '../../src/lib/passwordDigest';
 
 const ADMIN = { username: 'e2e_admin', password: 'e2e-admin-password' };
 
 async function adminApi(request: APIRequest): Promise<APIRequestContext> {
   const api = await request.newContext();
-  const res = await api.post(`${BASE}/api/auth/login`, { data: ADMIN });
+  const res = await api.post(`${BASE}/api/auth/login`, { data: { username: ADMIN.username, passwordHash: await passwordDigest(ADMIN.password) } });
   if (!res.ok()) throw new Error(`admin sign-in failed: ${res.status()}`);
   return api;
 }
@@ -40,7 +41,7 @@ test('admin API manages activation, bonus quota and admin flags', async ({ playw
   const meAfter = await (await userApi.get(`${BASE}/api/auth/me`)).json();
   expect(meAfter.user).toBeNull();
   const blocked = await request.newContext();
-  const login = await blocked.post(`${BASE}/api/auth/login`, { data: { username: name, password: TEST_PASSWORD } });
+  const login = await blocked.post(`${BASE}/api/auth/login`, { data: { username: name, passwordHash: await passwordDigest(TEST_PASSWORD) } });
   expect(login.status()).toBe(403);
   const body = await login.json();
   expect(body.error).toBe('account.deactivated');
@@ -48,7 +49,7 @@ test('admin API manages activation, bonus quota and admin flags', async ({ playw
 
   // Reactivation restores sign-in.
   await admin.patch(`${BASE}/api/admin/users/${target.id}`, { data: { isActive: true } });
-  const relogin = await blocked.post(`${BASE}/api/auth/login`, { data: { username: name, password: TEST_PASSWORD } });
+  const relogin = await blocked.post(`${BASE}/api/auth/login`, { data: { username: name, passwordHash: await passwordDigest(TEST_PASSWORD) } });
   expect(relogin.ok()).toBeTruthy();
   await userApi.dispose();
   await blocked.dispose();

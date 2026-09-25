@@ -9,7 +9,7 @@ export async function POST({ request, locals, cookies, getClientAddress }) {
   }
   try {
     const body = await request.json();
-    changePassword(locals.user.id, String(body?.current ?? ''), String(body?.next ?? ''), cookies.get(SESSION_COOKIE));
+    changePassword(locals.user.id, String(body?.currentHash ?? ''), String(body?.nextHash ?? ''), cookies.get(SESSION_COOKIE));
     return json({ ok: true });
   } catch (error) {
     if (error instanceof AuthError) return json({ error: error.message }, { status: error.status });

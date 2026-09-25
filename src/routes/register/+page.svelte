@@ -4,6 +4,7 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { base } from '$app/paths';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
+  import { passwordDigest } from '$lib/passwordDigest';
 
   let { data } = $props();
 
@@ -23,7 +24,7 @@
       const res = await fetch(`${base}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, passwordHash: await passwordDigest(password) }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) { error = body?.error ?? $t('auth.error.registerFailed'); return; }

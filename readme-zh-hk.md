@@ -69,8 +69,8 @@ docker run -d -p 3000:3000 -v cyan-data:/data \
 |---|---|---|
 | `PORT` | `3000` | Container 內的監聽埠 |
 | `DATA_DIR` | `/data`（Docker 以外使用 `data/`） | SQLite 資料庫目錄 |
-| `ADMIN_USERNAME` | — | 配合 `ADMIN_PASSWORD`，當沒有管理員時於啟動時授予管理員權限（帳號不存在則自動建立） |
-| `ADMIN_PASSWORD` | — | 上述管理員帳號的密碼 |
+| `ADMIN_USERNAME` | — | 配合 `ADMIN_PASSWORD`，每次啟動時確保此用户存在且為管理員 — 亦是該帳號的密碼重設通道 |
+| `ADMIN_PASSWORD` | — | 環境變數管理員的密碼；設定後每次啟動都會同步至資料庫 |
 | `MAX_PROJECTS_PER_USER` | `50` | `free` plan 的基本圖紙配額 |
 | `REGISTRATION_OPEN` | `true` | `false` 會關閉公開註冊 |
 | `AUTH_RATE_LIMIT` | 每 IP 每分鐘 `20` 次 | 登入／註冊次數上限；`0` 停用 |
