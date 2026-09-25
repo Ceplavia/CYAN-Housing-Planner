@@ -17,7 +17,7 @@ import { mockStorage } from './fixtures/indexeddb';
 beforeEach(() => { mockStorage(); });
 
 function nativeFiles(rows = cases.cases) {
-  const plan = JSON.parse(readFileSync('tests/fixtures/handoff-plan.json', 'utf8'));
+  const plan = JSON.parse(readFileSync('tests/fixtures/native-plan.json', 'utf8'));
   plan.furniture = rows.map((row, i) => ({
     id: `00000000-0000-4000-8000-${String(1000 + i).padStart(12, '0')}`,
     category: row.category, width: row.widthCm / 100, depth: 0.83125,
@@ -106,7 +106,7 @@ it('exporting older saved projects cannot turn retained native categories into c
   expect(movedPlan.furniture.find((f: any) => f.id === moved.id)).toMatchObject({ category: 'bed', width: 1.21875, level: project.floors[1].level });
 });
 it('uses the same mappings for RoomPlan JSON including original unknown names', () => {
-  const source = JSON.parse(readFileSync('tests/fixtures/handoff-roomplan.json', 'utf8'));
+  const source = JSON.parse(readFileSync('tests/fixtures/roomplan-scan.json', 'utf8'));
   source.objects = cases.cases.filter(row => row.category).map((row, i) => ({ identifier: `category-${i}`, category: { [row.category]: {} }, dimensions: [row.widthCm / 100, 0.9, 0.83125], transform: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, i, 0, 0, 1] }));
   const project = createProjectFromRoomPlan(source, 'Categories');
   expect(project.floors.flatMap(f => f.furniture).map(f => f.catalogId)).toEqual(cases.cases.filter(row => row.category).map(row => row.catalogId));

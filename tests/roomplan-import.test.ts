@@ -8,8 +8,8 @@ import { drawDoorOnWall } from '$lib/utils/canvasRenderer';
 import { roomProject } from './fixtures/project';
 
 // Identical fixtures are asserted against the real Swift exporter in FloorPlanTests.
-const fixture = JSON.parse(readFileSync(new URL('./fixtures/handoff-roomplan.json', import.meta.url), 'utf8'));
-const native = JSON.parse(readFileSync(new URL('./fixtures/handoff-plan.json', import.meta.url), 'utf8'));
+const fixture = JSON.parse(readFileSync(new URL('./fixtures/roomplan-scan.json', import.meta.url), 'utf8'));
+const native = JSON.parse(readFileSync(new URL('./fixtures/native-plan.json', import.meta.url), 'utf8'));
 const capture = () => structuredClone(fixture);
 
 it('preserves reflected RoomPlan furniture orientation for all local axis combinations', () => {

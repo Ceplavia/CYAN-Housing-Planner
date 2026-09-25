@@ -799,8 +799,8 @@ export const DEFAULT_ROOMPLAN_OPTIONS: RoomPlanImportOptions = {
 
 /**
  * Build a brand-new project from RoomPlan JSON data (walls/doors/windows/furniture
- * placed on the first floor). Shared by the file-import dialog and the iOS capture
- * handoff (`/editor?import=CODE`). Caller is responsible for loading/saving it.
+ * placed on the first floor). Shared by the file-import dialog.
+ * Caller is responsible for loading/saving it.
  */
 /** Name for a storey, preferring one the capture supplied. */
 function storyName(index: number, stories: RPStory[]): string {
@@ -857,9 +857,8 @@ export function importRoomPlanFloors(
 }
 
 /**
- * Build a brand-new project from RoomPlan JSON data. Shared by the
- * file-import dialog and the iOS capture handoff (`/editor?import=CODE`).
- * Caller is responsible for loading/saving it.
+ * Build a brand-new project from RoomPlan JSON data. Shared by the file-import
+ * dialog. Caller is responsible for loading/saving it.
  */
 export function createProjectFromRoomPlan(
   jsonData: any,

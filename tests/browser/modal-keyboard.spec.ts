@@ -158,7 +158,7 @@ for (const locale of ['en', 'pt']) for (const width of [1440, 390]) test(`${loca
   if (width < 768) await page.getByRole('button', { name: locale === 'pt' ? 'Alternar painel de ferramentas' : 'Toggle tools panel', exact: true }).click();
   const pending = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: locale === 'pt' ? /Importar RoomPlan Escaneamento LiDAR/ : /Import RoomPlan iOS LiDAR scan/ }).click();
-  await (await pending).setFiles(resolve('tests/fixtures/handoff-roomplan.json'));
+  await (await pending).setFiles(resolve('tests/fixtures/roomplan-scan.json'));
   const dialog = await focusInside(page, locale === 'pt' ? 'Importar RoomPlan' : 'Import RoomPlan');
   await dialog.getByRole('checkbox', { name: locale === 'pt' ? /Alinhar paredes/ : /Straighten walls/ }).uncheck();
   await dialog.getByRole('spinbutton', { name: locale === 'pt' ? 'Distância para unir cantos (cm)' : 'Corner merge distance (cm)' }).fill('25');

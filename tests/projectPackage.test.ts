@@ -10,7 +10,7 @@ import { createLocalStore } from '$lib/services/datastore';
 import { currentProject, loadProject, updateProjectName, createDefaultFloor } from '$lib/stores/project';
 
 const pixel = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a6WQAAAAASUVORK5CYII=', 'base64'));
-const native = () => JSON.parse(readFileSync('tests/fixtures/handoff-plan.json', 'utf8'));
+const native = () => JSON.parse(readFileSync('tests/fixtures/native-plan.json', 'utf8'));
 function nativeFiles() {
   const plan = native();
   plan.planNotes = 'Keep the complete plan notes';

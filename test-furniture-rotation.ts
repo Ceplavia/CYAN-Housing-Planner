@@ -5,7 +5,7 @@
  * the nearest wall segment purely from the 3D transforms (ground-plane
  * projection of each local X axis — no importer code involved). Then we import
  * via createProjectFromRoomPlan() with (a) straighten+orthogonal ON (the
- * DEFAULT_ROOMPLAN_OPTIONS used by the ?import= handoff and dialog defaults)
+ * DEFAULT_ROOMPLAN_OPTIONS used by the RoomPlan file-import dialog defaults)
  * and (b) both OFF, and check the furniture-vs-wall relative angle is
  * preserved (mod a small snapping tolerance for the ortho case).
  *

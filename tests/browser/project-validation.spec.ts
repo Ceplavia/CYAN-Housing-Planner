@@ -148,7 +148,7 @@ test('welcome import accepts the advertised iPhone RoomPlan JSON locally', async
   await page.goto('/');
   const pending = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: /Import a Plan/ }).click();
-  await (await pending).setFiles(resolve('tests/fixtures/handoff-roomplan.json'));
+  await (await pending).setFiles(resolve('tests/fixtures/roomplan-scan.json'));
   await expect(page.getByRole('application')).toContainText('4 walls');
   await expect(page.getByRole('combobox', { name: 'Current floor' }).locator('option')).toHaveText(['Entry', 'Loft', 'Future Floor']);
   const saved = await exportProject(page);

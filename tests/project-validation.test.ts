@@ -43,7 +43,7 @@ describe('native project reader', () => {
     const loaded = readProject(value); expect(readProject(JSON.parse(JSON.stringify(loaded)))).toEqual(loaded);
   });
   it('accepts generated iPhone handoff geometry and preserves every floor', () => {
-    const source = createProjectFromRoomPlan(JSON.parse(readFileSync('tests/fixtures/handoff-roomplan.json', 'utf8')), 'iPhone');
+    const source = createProjectFromRoomPlan(JSON.parse(readFileSync('tests/fixtures/roomplan-scan.json', 'utf8')), 'iPhone');
     expect(readProject(source)).toEqual(source);
   });
   it('migrates only missing legacy fields and keeps input bytes unchanged', () => {

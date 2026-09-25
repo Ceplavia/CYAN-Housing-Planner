@@ -1,8 +1,6 @@
 # Contributing
 
 Start with the [capability reference](FEATURES.md) and [current backlog](NEXT.md).
-This repository contains the web editor; native companion development and release
-requirements are tracked separately in NEXT.
 
 ## Local setup
 
@@ -13,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-The local editor does not require Firebase credentials or an account. Keep secrets,
+The editor requires a signed-in account; register one from the home page. Keep secrets,
 private scans and generated build/test artifacts out of commits. Prefer synthetic
 plans and images when reporting or testing a problem; remove personal information
 from screenshots and logs before sharing them.
@@ -64,8 +62,8 @@ npx playwright install --with-deps chromium firefox webkit
 npm run test:browser -- tests/browser/selection-clipboard.spec.ts --project=chromium
 ```
 
-Playwright uses the production `build/`, starts its own server on port 4188 and
-disables analytics/cloud uploads. Rebuild after code changes before browser tests;
+Playwright uses the production `build/`, starts its own server on port 4188 with
+a throwaway `DATA_DIR`, and seeds an `e2e_admin` account. Rebuild after code changes before browser tests;
 do not start a second server on that port. Engine names are `chromium`, `firefox`
 and `webkit`. See [playwright.config.ts](playwright.config.ts) for current settings.
 

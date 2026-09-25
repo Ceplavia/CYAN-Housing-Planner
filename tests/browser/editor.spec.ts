@@ -2,14 +2,7 @@ import { expect, test, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-const fixture = resolve('tests/fixtures/handoff-roomplan.json');
-
-test('self-hosted sharing fails closed without cloud configuration', async ({ request }) => {
-  const response = await request.post('/api/handoffs', { data: { walls: [] } });
-  expect(response.status()).toBe(503);
-  expect(response.headers()['cache-control']).toBe('no-store');
-  expect(await response.json()).toEqual({ error: 'Link sharing is unavailable. Use Export Editable Plan (JSON) instead.' });
-});
+const fixture = resolve('tests/fixtures/roomplan-scan.json');
 
 async function importJSON(page: Page, file: string | { name: string; mimeType: string; buffer: Buffer }) {
   await page.getByRole('button', { name: 'Export', exact: true }).press('Enter');
