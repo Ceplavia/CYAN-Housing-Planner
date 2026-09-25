@@ -1750,5 +1750,6 @@
   "landing.featLibDesc": "傢俬、門窗、樓梯及材質應有盡有，拖放即可使用。",
   "library.perPage": "每頁專案數",
   "library.perPageShort": "個 / 頁",
-  "library.pageOf": "第 {page} / {pages} 頁"
+  "library.pageOf": "第 {page} / {pages} 頁",
+  "admin.perPage": "每頁用户數"
 }

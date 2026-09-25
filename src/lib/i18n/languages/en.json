@@ -1559,5 +1559,6 @@
   "landing.featLibDesc": "Furniture, doors, windows, stairs and materials — drag and drop straight onto your plan.",
   "library.perPage": "Projects per page",
   "library.perPageShort": "per page",
-  "library.pageOf": "Page {page} of {pages}"
+  "library.pageOf": "Page {page} of {pages}",
+  "admin.perPage": "Users per page"
 }

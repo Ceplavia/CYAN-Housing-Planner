@@ -1750,5 +1750,6 @@
   "landing.featLibDesc": "Mobília, portas, janelas, escadas e materiais — arraste diretamente para a planta.",
   "library.perPage": "Projetos por página",
   "library.perPageShort": "por página",
-  "library.pageOf": "Página {page} de {pages}"
+  "library.pageOf": "Página {page} de {pages}",
+  "admin.perPage": "Utilizadores por página"
 }

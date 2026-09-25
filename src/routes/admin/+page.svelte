@@ -17,7 +17,8 @@
     createdAt: number;
   }
 
-  const PAGE_SIZE = 20;
+  const PAGE_SIZES = [10, 20, 50, 100] as const;
+  let pageSize = $state(20);
 
   let { data } = $props();
   let users = $state<AdminUser[]>([]);
@@ -31,14 +32,14 @@
   let deactivating = $state<string | null>(null);
   let reason = $state('');
 
-  const pageCount = $derived(Math.max(1, Math.ceil(total / PAGE_SIZE)));
+  const pageCount = $derived(Math.max(1, Math.ceil(total / pageSize)));
 
   let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
   async function load() {
     loadError = null;
     try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
       if (q.trim()) params.set('q', q.trim());
       const res = await fetch(`${base}/api/admin/users?${params}`);
       const body = await res.json().catch(() => null);
@@ -49,7 +50,17 @@
       if (users.length === 0 && page > 1) { page -= 1; await load(); }
     } catch { loadError = 'Could not reach the server.'; }
   }
-  onMount(() => { void load(); });
+  onMount(() => {
+    const saved = Number(localStorage.getItem('admin_pageSize'));
+    if ((PAGE_SIZES as readonly number[]).includes(saved)) pageSize = saved;
+    void load();
+  });
+
+  function onPageSize() {
+    localStorage.setItem('admin_pageSize', String(pageSize));
+    page = 1;
+    void load();
+  }
 
   function onSearch() {
     clearTimeout(searchTimer);
@@ -170,15 +181,23 @@
           </table>
         </div>
         {#if pageCount > 1 || total > 0}
-          <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
-            <span>{$t('admin.total', { count: total })}</span>
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500">
             <div class="flex items-center gap-2">
-              <button onclick={() => { page -= 1; void load(); }} disabled={page <= 1}
-                class="rounded border border-gray-300 px-3 py-1 font-semibold disabled:opacity-40">{$t('admin.prev')}</button>
-              <span>{page} / {pageCount}</span>
-              <button onclick={() => { page += 1; void load(); }} disabled={page >= pageCount}
-                class="rounded border border-gray-300 px-3 py-1 font-semibold disabled:opacity-40">{$t('admin.next')}</button>
+              <span>{$t('admin.total', { count: total })}</span>
+              <select aria-label={$t('admin.perPage')} bind:value={pageSize} onchange={onPageSize}
+                class="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm">
+                {#each PAGE_SIZES as size}<option value={size}>{size} {$t('library.perPageShort')}</option>{/each}
+              </select>
             </div>
+            {#if pageCount > 1}
+              <div class="flex items-center gap-1">
+                <button onclick={() => { page -= 1; void load(); }} disabled={page <= 1} aria-label={$t('admin.prev')}
+                  class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">‹</button>
+                <span class="px-2">{$t('library.pageOf', { page, pages: pageCount })}</span>
+                <button onclick={() => { page += 1; void load(); }} disabled={page >= pageCount} aria-label={$t('admin.next')}
+                  class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">›</button>
+              </div>
+            {/if}
           </div>
         {/if}
       {/if}
