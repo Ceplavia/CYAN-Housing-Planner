@@ -1730,12 +1730,12 @@
   "share.cardAlt": "Cartão de partilha de {name} com código QR para o plano",
   "landing.tagline": "Desenhe a sua casa ideal",
   "landing.hero": "Desenhe plantas em 2D e caminhe por elas em 3D",
-  "landing.heroSub": "Um editor de plantas autoalojado — cada projeto, versão e backup fica no seu próprio servidor, não na nuvem de outra pessoa.",
+  "landing.heroSub": "Um editor de plantas — desenhe, pré-visualize e partilhe; cada projeto e o seu histórico ficam guardados em segurança.",
   "landing.ctaStart": "Começar a planear",
   "landing.ctaSignIn": "Entrar na biblioteca",
   "landing.shot2d": "Edição de planta 2D",
   "landing.shot3d": "Pré-visualização 3D",
-  "landing.features": "Tudo corre no seu servidor",
+  "landing.features": "Tudo o que precisa",
   "landing.featDraw": "Editor 2D completo",
   "landing.featDrawDesc": "Paredes, portas, janelas, escadas e mobília com snapping, camadas e anotações.",
   "landing.featView": "Pré-visualização 3D e passeio",
@@ -1746,6 +1746,6 @@
   "landing.featBackupDesc": "Descarregue, restaure e importe toda a biblioteca num só ficheiro na página da conta.",
   "landing.featLang": "Três idiomas",
   "landing.featLangDesc": "English, Português e 繁體中文（香港）— mude a qualquer momento no ícone de globo.",
-  "landing.featHost": "Autoalojado",
-  "landing.featHostDesc": "Um container Docker com SQLite — contas, quotas e consola de administração incluídos."
+  "landing.featLib": "Biblioteca rica",
+  "landing.featLibDesc": "Mobília, portas, janelas, escadas e materiais — arraste diretamente para a planta."
 }

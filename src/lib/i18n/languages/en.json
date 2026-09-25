@@ -1539,12 +1539,12 @@
   "share.cardAlt": "Share card for {name} with a QR code linking to the shared plan",
   "landing.tagline": "Design your ideal home",
   "landing.hero": "Draw plans in 2D, walk through them in 3D",
-  "landing.heroSub": "A self-hosted floor plan editor — every project, version and backup lives on your own server, not someone else’s cloud.",
+  "landing.heroSub": "A floor plan editor — draw, preview and share; every project and its version history is kept safe.",
   "landing.ctaStart": "Start planning",
   "landing.ctaSignIn": "Sign in to your library",
   "landing.shot2d": "2D floor plan editing",
   "landing.shot3d": "3D plan preview",
-  "landing.features": "Everything runs on your server",
+  "landing.features": "Everything you need",
   "landing.featDraw": "Full 2D editor",
   "landing.featDrawDesc": "Walls, doors, windows, stairs and furniture with snapping, layers and annotations.",
   "landing.featView": "3D preview & walkthrough",
@@ -1555,6 +1555,6 @@
   "landing.featBackupDesc": "Download, restore and import the whole library as one file from your account page.",
   "landing.featLang": "Three languages",
   "landing.featLangDesc": "English, Português and 繁體中文（香港）— switch anytime from the globe icon.",
-  "landing.featHost": "Self-hosted",
-  "landing.featHostDesc": "One Docker container with SQLite storage — accounts, quotas and admin console built in."
+  "landing.featLib": "Rich asset library",
+  "landing.featLibDesc": "Furniture, doors, windows, stairs and materials — drag and drop straight onto your plan."
 }

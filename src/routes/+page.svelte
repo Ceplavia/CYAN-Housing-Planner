@@ -7,10 +7,10 @@
   const features = [
     ['landing.featDraw', 'landing.featDrawDesc'],
     ['landing.featView', 'landing.featViewDesc'],
+    ['landing.featLib', 'landing.featLibDesc'],
     ['landing.featShare', 'landing.featShareDesc'],
     ['landing.featBackup', 'landing.featBackupDesc'],
     ['landing.featLang', 'landing.featLangDesc'],
-    ['landing.featHost', 'landing.featHostDesc'],
   ] as const;
 </script>
 
@@ -59,9 +59,9 @@
       <h3 class="text-2xl font-bold text-slate-800 text-center">{$t('landing.features')}</h3>
       <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {#each features as [title, desc]}
-          <div class="rounded-2xl border border-gray-200 bg-gray-50/50 p-5">
+          <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <p class="font-semibold text-slate-800">{$t(title)}</p>
-            <p class="mt-1.5 text-sm text-gray-500 leading-relaxed">{$t(desc)}</p>
+            <p class="mt-1.5 text-sm text-gray-600 leading-relaxed">{$t(desc)}</p>
           </div>
         {/each}
       </div>

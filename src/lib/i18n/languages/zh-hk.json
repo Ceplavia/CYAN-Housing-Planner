@@ -1730,12 +1730,12 @@
   "share.cardAlt": "{name} 嘅分享卡片，附連往共享圖紙嘅 QR code",
   "landing.tagline": "設計你的理想居所",
   "landing.hero": "2D 繪圖，3D 漫遊",
-  "landing.heroSub": "可自行架設的平面圖編輯器 — 每個專案、版本記錄及備份均儲存在你自己的伺服器上，不經他人雲端。",
+  "landing.heroSub": "平面圖編輯器 — 由繪圖、預覽到分享，每個專案及版本記錄均會安全儲存。",
   "landing.ctaStart": "開始設計",
   "landing.ctaSignIn": "登入圖紙庫",
   "landing.shot2d": "2D 平面圖編輯",
   "landing.shot3d": "3D 平面圖預覽",
-  "landing.features": "一切盡在你的伺服器",
+  "landing.features": "一切盡在你想",
   "landing.featDraw": "完整 2D 編輯器",
   "landing.featDrawDesc": "牆身、門窗、樓梯及傢俬，支援貼齊、圖層及註解。",
   "landing.featView": "3D 預覽及漫遊",
@@ -1746,6 +1746,6 @@
   "landing.featBackupDesc": "於帳戶頁將整個圖紙庫下載、恢復及匯入為單一檔案。",
   "landing.featLang": "三種語言",
   "landing.featLangDesc": "English、Português、繁體中文（香港）— 隨時透過地球圖標切換。",
-  "landing.featHost": "自行架設",
-  "landing.featHostDesc": "單一 Docker container 加 SQLite — 內建帳戶、配額及管理後台。"
+  "landing.featLib": "豐富素材庫",
+  "landing.featLibDesc": "傢俬、門窗、樓梯及材質應有盡有，拖放即可使用。"
 }
