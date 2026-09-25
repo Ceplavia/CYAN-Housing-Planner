@@ -22,7 +22,7 @@
 ### 帳戶與儲存
 - **伺服器端圖紙庫** — 專案、縮圖、版本記錄及恢復資料均儲存在 `DATA_DIR` 的 SQLite 檔案中，瀏覽器不會保留資料
 - **註冊／登入** 採用 cookie session；用户只能檢視自己的圖紙
-- **按用户的圖紙配額** — plan 基本上限加管理員額外批出的 bonus 數量
+- **按用户的圖紙配額** — 配額來自 `plans.json`（`free` 50 / `pro` 200）加管理員額外批出的 bonus 數量；付費計劃設有到期日，過期後自動回退至 `free`
 - **分享鏈接** — 每個專案一條公開鏈接，可設定密碼及 1/7/30 日有效期；可隨時於專案菜單重新生成或取消
 - **管理後台**（`/admin`）— 激活／停用帳戶（停用原因會於登入時顯示）、更改 plan、批出 bonus 配額，支援搜索及分頁瀏覽用户
 
@@ -71,7 +71,8 @@ docker run -d -p 3000:3000 -v cyan-data:/data \
 | `DATA_DIR` | `/data`（Docker 以外使用 `data/`） | SQLite 資料庫目錄 |
 | `ADMIN_USERNAME` | — | 配合 `ADMIN_PASSWORD`，每次啟動時確保此用户存在且為管理員 — 亦是該帳號的密碼重設通道 |
 | `ADMIN_PASSWORD` | — | 環境變數管理員的密碼；設定後每次啟動都會同步至資料庫 |
-| `MAX_PROJECTS_PER_USER` | `50` | `free` plan 的基本圖紙配額 |
+| `MAX_PROJECTS_PER_USER` | `50` | 覆寫 `plans.json` 中 `free` plan 的配額 |
+| `PLANS_FILE` | `plans.json` | 計劃目錄檔案路徑；可以 `-v ./plans.json:/app/plans.json` 映射自訂檔案 |
 | `REGISTRATION_OPEN` | `true` | `false` 會關閉公開註冊 |
 | `AUTH_RATE_LIMIT` | 每 IP 每分鐘 `20` 次 | 登入／註冊次數上限；`0` 停用 |
 | `BODY_SIZE_LIMIT` | `64M` | 請求 body 上限 — 大型圖紙及圖紙庫恢復所需 |

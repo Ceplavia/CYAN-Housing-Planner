@@ -1751,5 +1751,21 @@
   "library.perPage": "每頁專案數",
   "library.perPageShort": "個 / 頁",
   "library.pageOf": "第 {page} / {pages} 頁",
-  "admin.perPage": "每頁用户數"
+  "admin.perPage": "每頁用户數",
+  "nav.pricing": "查看定價",
+  "menu.subscription": "訂閱計劃",
+  "admin.expiry": "到期日",
+  "admin.expired": "已過期",
+  "sub.title": "訂閱計劃",
+  "sub.subtitle": "選擇適合你的計劃。",
+  "sub.free": "免費版",
+  "sub.fLimit": "上限 {count} 個專案",
+  "sub.fServer": "專案安全地儲存在伺服器",
+  "sub.fShare": "分享鏈接",
+  "sub.pLimit": "專案上限提升至 {count} 個",
+  "sub.pAll": "包含免費版計劃所有功能",
+  "sub.subscribed": "已訂閱",
+  "sub.currentPlan": "目前計劃",
+  "sub.soon": "暫不可用",
+  "sub.start": "開始使用"
 }

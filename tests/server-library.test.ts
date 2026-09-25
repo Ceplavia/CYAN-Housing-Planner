@@ -14,6 +14,7 @@ process.env.DATA_DIR = dataDir;
 
 const { database, resetDatabaseForTests } = await import('$lib/server/db');
 const { createUser, verifyUser, createSession, sessionUser, changePassword, AuthError } = await import('$lib/server/auth');
+const { resetPlansForTests } = await import('$lib/server/plans');
 const lib = await import('$lib/server/userLibrary');
 
 afterAll(() => {
@@ -67,23 +68,23 @@ describe('server project storage', () => {
 
     // The per-user limit blocks creation but never updates.
     const limited = createUser('Case', dg('storage password'));
-    process.env.MAX_PROJECTS_PER_USER = '1';
+    process.env.MAX_PROJECTS_PER_USER = '1'; resetPlansForTests();
     try {
       expect(() => lib.saveProject(limited, 'p1', JSON.stringify({ ...project, id: 'p1' }), null)).not.toThrow();
       expect(() => lib.saveProject(limited, 'p2', JSON.stringify({ ...project, id: 'p2' }), null))
         .toThrow(/Project limit reached \(1\/1\)/);
       expect(lib.saveProject(limited, 'p1', JSON.stringify({ ...project, id: 'p1' }), 1)).toBe(2); // updates still work
-    } finally { delete process.env.MAX_PROJECTS_PER_USER; }
+    } finally { delete process.env.MAX_PROJECTS_PER_USER; resetPlansForTests(); }
 
     // An admin-granted bonus stands in for a future subscription tier:
     // base plan 1 + bonus 2 = effective limit 3.
-    process.env.MAX_PROJECTS_PER_USER = '1';
+    process.env.MAX_PROJECTS_PER_USER = '1'; resetPlansForTests();
     try {
       database().prepare('UPDATE users SET bonus_projects = 2 WHERE id = ?').run(limited.id);
       limited.bonusProjects = 2;
       expect(lib.saveProject(limited, 'p2', JSON.stringify({ ...project, id: 'p2' }), null)).toBe(1);
       expect(lib.projectCount(limited.id)).toBe(2);
-    } finally { delete process.env.MAX_PROJECTS_PER_USER; }
+    } finally { delete process.env.MAX_PROJECTS_PER_USER; resetPlansForTests(); }
   });
 
   it('stores thumbnails, history and deletes them with the project', () => {
@@ -132,7 +133,7 @@ describe('server library backup and restore', () => {
 
     // A quota breach mid-restore rolls the whole restore back.
     const limited = createUser('Quota', dg('storage password'));
-    process.env.MAX_PROJECTS_PER_USER = '1';
+    process.env.MAX_PROJECTS_PER_USER = '1'; resetPlansForTests();
     try {
       const two = JSON.stringify({
         a: JSON.stringify({ ...project, id: 'a' }),
@@ -140,6 +141,6 @@ describe('server library backup and restore', () => {
       });
       await expect(lib.restoreLibrary(limited, two)).rejects.toThrow(/Project limit reached/);
       expect(lib.projectCount(limited.id)).toBe(0); // nothing half-restored
-    } finally { delete process.env.MAX_PROJECTS_PER_USER; }
+    } finally { delete process.env.MAX_PROJECTS_PER_USER; resetPlansForTests(); }
   });
 });

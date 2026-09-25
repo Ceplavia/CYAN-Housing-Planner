@@ -49,6 +49,10 @@
         class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50">
         {$t('menu.accountCenter')}
       </a>
+      <a role="menuitem" href={`${base}/subscription`}
+        class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50">
+        {$t('menu.subscription')}
+      </a>
       {#if isAdmin}
         <a role="menuitem" href={`${base}/admin`}
           class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50">

@@ -17,6 +17,10 @@
 <div class="min-h-screen bg-gray-50">
   <!-- Header -->
   <SiteHeader>
+    <a href={`${base}/subscription`}
+      class="px-4 py-2.5 text-white/80 hover:text-white font-medium text-sm transition-colors">
+      {$t('nav.pricing')}
+    </a>
     <a href={`${base}/login`}
       class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20">
       {$t('auth.signIn')}

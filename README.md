@@ -22,7 +22,7 @@ Forked from the MIT-licensed [openplan3d](https://github.com/laanlabs/openPlan3D
 ### Accounts & storage
 - **Server-side library** — projects, thumbnails, version history and recovery data live in a SQLite file under `DATA_DIR`; nothing is kept in the browser
 - **Sign-up / sign-in** with cookie sessions; users only ever see their own plans
-- **Per-user project quota** — plan base allowance + admin-granted bonus slots
+- **Per-user project quota** — plan allowance from `plans.json` (`free` 50 / `pro` 200) + admin-granted bonus slots; paid plans carry an expiry date and fall back to `free`
 - **Share links** — per-project public links with optional password and 1/7/30-day expiry; regenerate or revoke anytime from the project menu
 - **Admin console** (`/admin`) — activate/deactivate accounts (with a reason shown at sign-in), change plans, grant bonus slots
 
@@ -71,7 +71,8 @@ Open http://localhost:3000, sign in as the admin account (created from the env v
 | `DATA_DIR` | `/data` (`data/` outside Docker) | SQLite database directory |
 | `ADMIN_USERNAME` | — | With `ADMIN_PASSWORD`, ensures this user exists as an admin at every boot — also the password-reset path for that account |
 | `ADMIN_PASSWORD` | — | The env admin's password; rotated into the DB on each boot while set |
-| `MAX_PROJECTS_PER_USER` | `50` | Base project quota of the `free` plan |
+| `MAX_PROJECTS_PER_USER` | `50` | Overrides the `free` plan quota from `plans.json` |
+| `PLANS_FILE` | `plans.json` | Path to the plan catalog; mount your own with `-v ./plans.json:/app/plans.json` |
 | `REGISTRATION_OPEN` | `true` | `false` closes public sign-ups |
 | `AUTH_RATE_LIMIT` | `20` per minute per IP | Login/register attempts cap; `0` disables |
 | `BODY_SIZE_LIMIT` | `64M` | Max request body — large plans and library restores need this |

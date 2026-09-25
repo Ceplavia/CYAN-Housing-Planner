@@ -1,0 +1,4 @@
+{
+  "free": { "projectLimit": 50 },
+  "pro": { "projectLimit": 200 }
+}

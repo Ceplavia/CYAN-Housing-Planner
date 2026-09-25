@@ -24,6 +24,7 @@ export function database(): DatabaseSync {
           username TEXT NOT NULL UNIQUE COLLATE NOCASE,
           pass_hash TEXT NOT NULL,
           plan TEXT NOT NULL DEFAULT 'free',
+          plan_expires_at INTEGER,
           bonus_projects INTEGER NOT NULL DEFAULT 0,
           is_admin INTEGER NOT NULL DEFAULT 0,
           is_active INTEGER NOT NULL DEFAULT 1,
@@ -101,15 +102,13 @@ export function database(): DatabaseSync {
         );
       `);
     }
-    db.exec('PRAGMA user_version = 3');
+    // v3 → v4: paid-plan expiry. Idempotent column check covers both the
+    // migrated and fresh-install paths.
+    const ucols = new Set((db.prepare('PRAGMA table_info(users)').all() as { name: string }[]).map(c => c.name));
+    if (!ucols.has('plan_expires_at')) db.exec('ALTER TABLE users ADD COLUMN plan_expires_at INTEGER');
+    db.exec('PRAGMA user_version = 4');
   }
   return db;
-}
-
-/** Per-user default when users.project_limit is NULL; subscriptions can override per user. */
-export function defaultProjectLimit(): number {
-  const value = Number(process.env.MAX_PROJECTS_PER_USER);
-  return Number.isInteger(value) && value > 0 ? value : 50;
 }
 
 /** Test helper: point subsequent connections at a different database. */

@@ -10,6 +10,7 @@ export function GET({ locals }) {
       id: user.id,
       username: user.username,
       plan: user.plan,
+      planExpiresAt: user.planExpiresAt,
       bonusProjects: user.bonusProjects,
       isAdmin: user.isAdmin,
       projectCount: projectCount(user.id),

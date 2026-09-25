@@ -1751,5 +1751,21 @@
   "library.perPage": "Projetos por página",
   "library.perPageShort": "por página",
   "library.pageOf": "Página {page} de {pages}",
-  "admin.perPage": "Utilizadores por página"
+  "admin.perPage": "Utilizadores por página",
+  "nav.pricing": "Preços",
+  "menu.subscription": "Subscrição",
+  "admin.expiry": "Expira",
+  "admin.expired": "Expirado",
+  "sub.title": "Planos",
+  "sub.subtitle": "Escolha o plano que combina com o seu uso.",
+  "sub.free": "Grátis",
+  "sub.fLimit": "Até {count} projetos",
+  "sub.fServer": "Projetos guardados em segurança no servidor",
+  "sub.fShare": "Links de partilha",
+  "sub.pLimit": "Limite de projetos aumentado para {count}",
+  "sub.pAll": "Tudo o que o plano Grátis inclui",
+  "sub.subscribed": "Subscrito",
+  "sub.currentPlan": "Plano atual",
+  "sub.soon": "Ainda indisponível",
+  "sub.start": "Começar"
 }

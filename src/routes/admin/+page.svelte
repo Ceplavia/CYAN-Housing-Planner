@@ -8,6 +8,7 @@
     id: string;
     username: string;
     plan: string;
+    planExpiresAt: number | null;
     bonusProjects: number;
     isAdmin: boolean;
     isActive: boolean;
@@ -31,6 +32,28 @@
   // Deactivating asks for a reason first; the inline form hangs under the row.
   let deactivating = $state<string | null>(null);
   let reason = $state('');
+  // Plan dropdown + expiry date: switching to a paid plan defers the PATCH
+  // until a date is picked (keyed by user id).
+  let pendingPlan = $state<Record<string, string>>({});
+  let pendingExpiry = $state<Record<string, string>>({});
+
+  function isoDate(ms: number | null): string {
+    return ms ? new Date(ms).toISOString().slice(0, 10) : '';
+  }
+
+  function onPlanChange(user: AdminUser, plan: string) {
+    if (plan === 'free') { delete pendingPlan[user.id]; void patch(user, { plan: 'free' }); return; }
+    pendingPlan[user.id] = plan;
+    pendingExpiry[user.id] = isoDate(user.planExpiresAt);
+    if (pendingExpiry[user.id]) void patchPlan(user); // already dated — apply at once
+  }
+
+  function patchPlan(user: AdminUser) {
+    const plan = pendingPlan[user.id] ?? user.plan;
+    const date = pendingExpiry[user.id];
+    const ms = date ? new Date(`${date}T23:59:59`).getTime() : null;
+    void patch(user, { plan, planExpiresAt: ms });
+  }
 
   const pageCount = $derived(Math.max(1, Math.ceil(total / pageSize)));
 
@@ -76,6 +99,7 @@
       });
       const result = await res.json().catch(() => null);
       if (!res.ok) { rowError[user.id] = result?.error ?? `Request failed (${res.status})`; return; }
+      delete pendingPlan[user.id]; delete pendingExpiry[user.id];
       await load();
     } catch { rowError[user.id] = 'Could not reach the server.'; }
     finally { busy = null; }
@@ -110,6 +134,7 @@
               <tr class="border-b border-gray-200 text-left text-gray-500">
                 <th class="py-2 pr-4 font-medium">{$t('admin.user')}</th>
                 <th class="py-2 pr-4 font-medium">{$t('admin.plan')}</th>
+                <th class="py-2 pr-4 font-medium">{$t('admin.expiry')}</th>
                 <th class="py-2 pr-4 font-medium">{$t('admin.bonus')}</th>
                 <th class="py-2 pr-4 font-medium">{$t('admin.usage')}</th>
                 <th class="py-2 pr-4 font-medium">{$t('admin.status')}</th>
@@ -125,11 +150,26 @@
                     {#if user.isAdmin}<span class="ml-1 rounded bg-slate-700 px-1.5 py-0.5 text-xs text-white">admin</span>{/if}
                   </td>
                   <td class="py-3 pr-4">
-                    <input
-                      value={user.plan} list="admin-plans" disabled={busy === user.id}
-                      onchange={(e) => void patch(user, { plan: e.currentTarget.value })}
-                      class="w-24 rounded border border-gray-300 px-2 py-1 text-sm" />
-                    <datalist id="admin-plans"><option value="free"></option></datalist>
+                    <select
+                      value={pendingPlan[user.id] ?? user.plan} disabled={busy === user.id}
+                      onchange={(e) => onPlanChange(user, e.currentTarget.value)}
+                      class="rounded border border-gray-300 bg-white px-2 py-1 text-sm">
+                      {#each data.plans as plan}<option value={plan}>{plan}</option>{/each}
+                    </select>
+                    {#if (pendingPlan[user.id] ?? user.plan) !== 'free' && user.planExpiresAt !== null && user.planExpiresAt < Date.now() && !pendingPlan[user.id]}
+                      <span class="ml-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">{$t('admin.expired')}</span>
+                    {/if}
+                  </td>
+                  <td class="py-3 pr-4">
+                    {#if (pendingPlan[user.id] ?? user.plan) !== 'free'}
+                      <input
+                        type="date" aria-label={$t('admin.expiry')} disabled={busy === user.id}
+                        value={pendingExpiry[user.id] ?? isoDate(user.planExpiresAt)}
+                        onchange={(e) => { pendingExpiry[user.id] = e.currentTarget.value; patchPlan(user); }}
+                        class="rounded border border-gray-300 px-2 py-1 text-sm" />
+                    {:else}
+                      <span class="text-xs text-gray-300">—</span>
+                    {/if}
                   </td>
                   <td class="py-3 pr-4">
                     <input
@@ -161,7 +201,7 @@
                 </tr>
                 {#if deactivating === user.id}
                   <tr class="border-b border-gray-100 bg-red-50/40">
-                    <td colspan="6" class="py-3">
+                    <td colspan="7" class="py-3">
                       <form class="flex items-center gap-2" onsubmit={(e) => { e.preventDefault(); confirmDeactivate(user); }}>
                         <input bind:value={reason} placeholder={$t('admin.reasonPlaceholder')} aria-label={$t('admin.reason')}
                           class="w-72 rounded border border-gray-300 px-2 py-1 text-sm" />
@@ -172,10 +212,10 @@
                   </tr>
                 {/if}
                 {#if rowError[user.id]}
-                  <tr><td colspan="6" class="pb-2"><p role="alert" class="rounded bg-red-50 px-2 py-1 text-xs text-red-900">{rowError[user.id]}</p></td></tr>
+                  <tr><td colspan="7" class="pb-2"><p role="alert" class="rounded bg-red-50 px-2 py-1 text-xs text-red-900">{rowError[user.id]}</p></td></tr>
                 {/if}
               {:else}
-                <tr><td colspan="6" class="py-8 text-center text-sm text-gray-400">{$t('admin.noUsers')}</td></tr>
+                <tr><td colspan="7" class="py-8 text-center text-sm text-gray-400">{$t('admin.noUsers')}</td></tr>
               {/each}
             </tbody>
           </table>

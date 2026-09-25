@@ -1,4 +1,6 @@
-import { database, defaultProjectLimit } from './db';
+import { database } from './db';
+import { planLimit } from './plans';
+export { planLimit };
 import type { AuthUser } from './auth';
 import { prepareLibraryRestore, type LibrarySink, type RestoreResult } from '$lib/services/libraryRestore';
 
@@ -24,17 +26,6 @@ export interface ProjectRow {
   revision: number;
   created_at: number;
   updated_at: number;
-}
-
-/**
- * Per-plan base allowances; future subscription tiers map here. 'free' and
- * unknown plans fall back to the deployment default (MAX_PROJECTS_PER_USER)
- * so a plan rename never grants unlimited storage.
- */
-const PLAN_LIMITS: Record<string, number> = {};
-
-export function planLimit(plan: string): number {
-  return PLAN_LIMITS[plan] ?? defaultProjectLimit();
 }
 
 /** Effective limit = the plan's base allowance plus admin-granted bonus slots. */

@@ -1560,5 +1560,21 @@
   "library.perPage": "Projects per page",
   "library.perPageShort": "per page",
   "library.pageOf": "Page {page} of {pages}",
-  "admin.perPage": "Users per page"
+  "admin.perPage": "Users per page",
+  "nav.pricing": "Pricing",
+  "menu.subscription": "Subscription",
+  "admin.expiry": "Expiry",
+  "admin.expired": "Expired",
+  "sub.title": "Plans",
+  "sub.subtitle": "Pick the plan that fits how you use the planner.",
+  "sub.free": "Free",
+  "sub.fLimit": "Up to {count} projects",
+  "sub.fServer": "Projects stored securely on the server",
+  "sub.fShare": "Share links",
+  "sub.pLimit": "Project limit raised to {count}",
+  "sub.pAll": "Everything in the Free plan",
+  "sub.subscribed": "Subscribed",
+  "sub.currentPlan": "Current plan",
+  "sub.soon": "Not available yet",
+  "sub.start": "Get started"
 }

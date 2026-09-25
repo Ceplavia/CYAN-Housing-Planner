@@ -15,6 +15,8 @@ ENV NODE_ENV=production \
     BODY_SIZE_LIMIT=64M
 COPY --from=build /app/package.json ./
 COPY --from=build /app/build ./build
+# Plan catalog (default quotas); override with -v ./plans.json:/app/plans.json.
+COPY --from=build /app/plans.json ./plans.json
 # /data holds the SQLite database; mount a volume to keep accounts and plans.
 RUN mkdir -p /data && chown node:node /data
 VOLUME /data

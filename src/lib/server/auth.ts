@@ -1,6 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import type { Cookies } from '@sveltejs/kit';
 import { database } from './db';
+import { effectivePlan } from './plans';
 
 export const SESSION_COOKIE = 'cyan_session';
 const SESSION_DAYS = 30;
@@ -18,7 +19,10 @@ export const PASSWORD_DIGEST_RE = /^[0-9a-f]{64}$/;
 export interface AuthUser {
   id: string;
   username: string;
+  /** The plan the user effectively has right now — expired paid plans report 'free'. */
   plan: string;
+  /** Raw subscription expiry (ms); null for free or perpetual rows. */
+  planExpiresAt: number | null;
   /** Extra project slots granted by an admin on top of the plan allowance. */
   bonusProjects: number;
   isAdmin: boolean;
@@ -29,17 +33,19 @@ interface UserRow {
   username: string;
   pass_hash: string;
   plan: string;
+  plan_expires_at: number | null;
   bonus_projects: number;
   is_admin: number;
   is_active: number;
   inactive_reason: string | null;
 }
 
-const USER_COLUMNS = 'id, username, pass_hash, plan, bonus_projects, is_admin, is_active, inactive_reason';
+const USER_COLUMNS = 'id, username, pass_hash, plan, plan_expires_at, bonus_projects, is_admin, is_active, inactive_reason';
 
 function toAuthUser(row: UserRow): AuthUser {
   return {
-    id: row.id, username: row.username, plan: row.plan,
+    id: row.id, username: row.username, plan: effectivePlan(row.plan, row.plan_expires_at),
+    planExpiresAt: row.plan_expires_at,
     bonusProjects: row.bonus_projects, isAdmin: row.is_admin === 1,
   };
 }
@@ -89,7 +95,7 @@ export function createUser(username: string, passwordHash: string): AuthUser {
     }
     throw error;
   }
-  return { id, username: name, plan: 'free', bonusProjects: 0, isAdmin: false };
+  return { id, username: name, plan: 'free', planExpiresAt: null, bonusProjects: 0, isAdmin: false };
 }
 
 /** Deletes the user row; foreign keys cascade to sessions and all library data. */

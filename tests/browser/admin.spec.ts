@@ -71,7 +71,7 @@ test('admin console deactivates a user through the UI', async ({ page, playwrigh
   const form = page.locator('tbody form');
   await form.getByPlaceholder('Reason shown to the user (optional)').fill('Test ban');
   await form.getByRole('button', { name: 'Deactivate' }).click();
-  await expect(row.locator('td').nth(4)).toHaveText('Deactivated');
+  await expect(row.locator('td').nth(5)).toHaveText('Deactivated');
   await admin.dispose();
   await userApi.dispose();
 });

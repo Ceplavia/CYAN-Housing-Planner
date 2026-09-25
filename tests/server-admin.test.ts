@@ -15,6 +15,7 @@ const { database, resetDatabaseForTests } = await import('$lib/server/db');
 const { createUser, createSession, sessionUser, verifyUser, AuthError } = await import('$lib/server/auth');
 const { bootstrapAdmin } = await import('$lib/server/bootstrap');
 const { listUsers, requireAdmin, updateUser } = await import('$lib/server/admin');
+const { resetPlansForTests } = await import('$lib/server/plans');
 const lib = await import('$lib/server/userLibrary');
 
 afterAll(() => {
@@ -76,7 +77,7 @@ describe('admin bootstrap', () => {
 describe('admin user management', () => {
   it('deactivates a user with a reason, kills their sessions, and reactivates', () => {
     const adminRow = database().prepare('SELECT * FROM users WHERE is_admin = 1 LIMIT 1').get() as any;
-    const admin = { id: adminRow.id, username: adminRow.username, plan: 'free', bonusProjects: 0, isAdmin: true };
+    const admin = { id: adminRow.id, username: adminRow.username, plan: 'free', planExpiresAt: null, bonusProjects: 0, isAdmin: true };
     const user = createUser('Harper', dg('a long enough password'));
     const session = createSession(user.id);
     expect(sessionUser(session.token)?.id).toBe(user.id);
@@ -93,23 +94,50 @@ describe('admin user management', () => {
 
   it('refuses to let an admin deactivate themselves', () => {
     const adminRow = database().prepare('SELECT * FROM users WHERE is_admin = 1 LIMIT 1').get() as any;
-    const admin = { id: adminRow.id, username: adminRow.username, plan: 'free', bonusProjects: 0, isAdmin: true };
+    const admin = { id: adminRow.id, username: adminRow.username, plan: 'free', planExpiresAt: null, bonusProjects: 0, isAdmin: true };
     expect(() => updateUser(admin, admin.id, { isActive: false })).toThrow(AuthError);
     expect(() => updateUser(admin, 'missing', { isActive: false })).toThrow(AuthError);
   });
 
   it('plan + bonus drives the effective project limit', () => {
     const adminRow = database().prepare('SELECT * FROM users WHERE is_admin = 1 LIMIT 1').get() as any;
-    const admin = { id: adminRow.id, username: adminRow.username, plan: 'free', bonusProjects: 0, isAdmin: true };
+    const admin = { id: adminRow.id, username: adminRow.username, plan: 'free', planExpiresAt: null, bonusProjects: 0, isAdmin: true };
     const user = createUser('Iris', dg('a long enough password'));
     process.env.MAX_PROJECTS_PER_USER = '5';
+    resetPlansForTests();
     try {
       expect(lib.projectLimit({ ...user })).toBe(5);
       updateUser(admin, user.id, { bonusProjects: 3 });
       const listed = listUsers().users.find(u => u.id === user.id)!;
       expect(listed.bonusProjects).toBe(3);
       expect(listed.projectLimit).toBe(8);
-    } finally { delete process.env.MAX_PROJECTS_PER_USER; }
+    } finally { delete process.env.MAX_PROJECTS_PER_USER; resetPlansForTests(); }
+  });
+
+  it('paid plans require an expiry date and fall back to free when past', () => {
+    const adminRow = database().prepare('SELECT * FROM users WHERE is_admin = 1 LIMIT 1').get() as any;
+    const admin = { id: adminRow.id, username: adminRow.username, plan: 'free', planExpiresAt: null, bonusProjects: 0, isAdmin: true };
+    const user = createUser('Kai', dg('a long enough password'));
+
+    // A paid plan with no expiry is rejected outright.
+    expect(() => updateUser(admin, user.id, { plan: 'pro' })).toThrow(AuthError);
+    expect(() => updateUser(admin, user.id, { plan: 'bogus' })).toThrow(AuthError);
+
+    const future = Date.now() + 86400000;
+    updateUser(admin, user.id, { plan: 'pro', planExpiresAt: future });
+    let listed = listUsers().users.find(u => u.id === user.id)!;
+    expect(listed.plan).toBe('pro');
+    expect(listed.planExpiresAt).toBe(future);
+    expect(listed.projectLimit).toBe(200);
+
+    // An expired grant reads as free again — including the quota.
+    updateUser(admin, user.id, { planExpiresAt: Date.now() - 1000 });
+    listed = listUsers().users.find(u => u.id === user.id)!;
+    expect(listed.projectLimit).toBe(50);
+
+    // Reverting to free clears the expiry.
+    updateUser(admin, user.id, { plan: 'free' });
+    expect(listUsers().users.find(u => u.id === user.id)!.planExpiresAt).toBeNull();
   });
 
   it('requireAdmin rejects anonymous and non-admin callers', () => {
@@ -117,6 +145,6 @@ describe('admin user management', () => {
     expect(() => requireAdmin(null)).toThrow(AuthError);
     expect(() => requireAdmin(user)).toThrow(AuthError);
     const adminRow = database().prepare('SELECT * FROM users WHERE is_admin = 1 LIMIT 1').get() as any;
-    expect(requireAdmin({ id: adminRow.id, username: adminRow.username, plan: 'free', bonusProjects: 0, isAdmin: true }).isAdmin).toBe(true);
+    expect(requireAdmin({ id: adminRow.id, username: adminRow.username, plan: 'free', planExpiresAt: null, bonusProjects: 0, isAdmin: true }).isAdmin).toBe(true);
   });
 });
