@@ -17,12 +17,13 @@
     open = false;
     if (restore) trigger?.focus({ preventScroll: true });
   }
-  async function show(last = false) {
+  async function show(focus: 'first' | 'last' | null = null) {
     if (disabled) return;
     open = true;
+    if (!focus) return;
     await tick();
     const items = menu?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]');
-    items?.[last ? items.length - 1 : 0]?.focus();
+    items?.[focus === 'last' ? items.length - 1 : 0]?.focus();
   }
   function outside(event: Event) {
     const target = event.target as Node;
@@ -58,7 +59,9 @@
   onclick={() => open ? close(true) : show()}
   onkeydown={(event) => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      event.preventDefault(); void show(event.key === 'ArrowUp');
+      event.preventDefault(); void show(event.key === 'ArrowUp' ? 'last' : 'first');
+    } else if (event.key === 'Escape' && open) {
+      event.preventDefault(); close(true);
     }
   }}
   aria-label={$t('library.actions', { name: name || $t('library.untitled') })}

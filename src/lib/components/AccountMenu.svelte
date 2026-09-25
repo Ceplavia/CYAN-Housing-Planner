@@ -14,8 +14,9 @@
     open = false;
     if (restore) trigger?.focus({ preventScroll: true });
   }
-  async function show() {
+  async function show(focusFirst = false) {
     open = true;
+    if (!focusFirst) return;
     await tick();
     menu?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
   }
@@ -30,7 +31,10 @@
 <div class="relative">
   <button bind:this={trigger} type="button"
     onclick={() => open ? close(true) : show()}
-    onkeydown={(e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); void show(); } }}
+    onkeydown={(e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); void show(true); }
+      else if (e.key === 'Escape' && open) { e.preventDefault(); close(true); }
+    }}
     aria-label={$t('menu.account', { name: username })} aria-haspopup="menu" aria-expanded={open}
     class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all flex items-center gap-2 border border-white/20">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>

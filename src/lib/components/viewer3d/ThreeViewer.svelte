@@ -39,6 +39,9 @@
   import { getMaterial } from '$lib/utils/materials';
   import { getWallTextureCanvas, getFloorTextureCanvas, setTextureLoadCallback } from '$lib/utils/textureGenerator';
 
+  // readonly (shared-link viewers): hide scene export and edit-mode controls
+  let { readonly = false }: { readonly?: boolean } = $props();
+
   let container: HTMLDivElement;
   let renderer: THREE.WebGLRenderer;
   let scene: THREE.Scene;
@@ -2059,11 +2062,13 @@
 </script>
 
 <div bind:this={container} class="w-full h-full relative" role="region" aria-label={$t('viewerNav.region')}>
-  <div class="absolute bottom-16 left-4 z-10 max-w-xs">
-    {#if renderExportMessage}<p role="status" class="mb-2 rounded bg-black/80 p-2 text-xs text-white">{renderExportLabels[renderExportMessage] ? $t(renderExportLabels[renderExportMessage]) : renderExportMessage}</p>{/if}
-    <button class="rounded bg-black/70 px-3 py-2 text-sm text-white hover:bg-black/80" onclick={exportBlenderScene}
-      title={$t('viewerExport.help')}>{$t('viewerExport.button')}</button>
-  </div>
+  {#if !readonly}
+    <div class="absolute bottom-16 left-4 z-10 max-w-xs">
+      {#if renderExportMessage}<p role="status" class="mb-2 rounded bg-black/80 p-2 text-xs text-white">{renderExportLabels[renderExportMessage] ? $t(renderExportLabels[renderExportMessage]) : renderExportMessage}</p>{/if}
+      <button class="rounded bg-black/70 px-3 py-2 text-sm text-white hover:bg-black/80" onclick={exportBlenderScene}
+        title={$t('viewerExport.help')}>{$t('viewerExport.button')}</button>
+    </div>
+  {/if}
   {#if showAllFloors && currentFloor}
     <div class="absolute bottom-4 right-4 z-10 rounded bg-black/70 px-3 py-2 text-xs text-white pointer-events-none">
       {$t('viewerExport.elevation', { name: currentFloor.name, value: activeFloorElevation })}
@@ -2116,17 +2121,19 @@
     </button>
 
     <!-- Edit Mode Toggle -->
-    <button
-      onclick={() => { editMode = !editMode; if (editMode && walkthroughMode) { exitWalkthroughMode(); } if (!editMode) { selectedElementId.set(null); } }}
-      class="p-2 rounded-lg transition-colors {editMode ? 'bg-blue-600 text-white ring-2 ring-blue-300' : 'bg-black/70 text-white hover:bg-black/80'}"
-      title={editMode ? $t('viewerNav.exitEdit') : $t('viewerNav.editHelp')}
-      aria-label={editMode ? $t('viewerNav.exitEdit') : $t('viewerNav.edit')}
-    >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-      </svg>
-    </button>
+    {#if !readonly}
+      <button
+        onclick={() => { editMode = !editMode; if (editMode && walkthroughMode) { exitWalkthroughMode(); } if (!editMode) { selectedElementId.set(null); } }}
+        class="p-2 rounded-lg transition-colors {editMode ? 'bg-blue-600 text-white ring-2 ring-blue-300' : 'bg-black/70 text-white hover:bg-black/80'}"
+        title={editMode ? $t('viewerNav.exitEdit') : $t('viewerNav.editHelp')}
+        aria-label={editMode ? $t('viewerNav.exitEdit') : $t('viewerNav.edit')}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+    {/if}
 
     <!-- Interior Camera Button -->
     <button

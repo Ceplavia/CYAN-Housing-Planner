@@ -10,8 +10,9 @@
     open = false;
     if (restore) trigger?.focus({ preventScroll: true });
   }
-  async function show() {
+  async function show(focusFirst = false) {
     open = true;
+    if (!focusFirst) return;
     await tick();
     menu?.querySelector<HTMLButtonElement>('[role="menuitemradio"]')?.focus();
   }
@@ -30,7 +31,10 @@
 <div class="relative">
   <button bind:this={trigger} type="button"
     onclick={() => open ? close(true) : show()}
-    onkeydown={(e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); void show(); } }}
+    onkeydown={(e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); void show(true); }
+      else if (e.key === 'Escape' && open) { e.preventDefault(); close(true); }
+    }}
     aria-label={$t('settings.language')} aria-haspopup="menu" aria-expanded={open}
     class="p-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-all border border-white/20 flex items-center justify-center">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

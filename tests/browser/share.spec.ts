@@ -46,6 +46,10 @@ test('owner creates a link and an anonymous visitor sees the plan', async ({ pag
     await expect(guest.getByRole('button', { name: '3D' })).toBeVisible();
     // No editing affordances leak into the shared view.
     await expect(guest.getByRole('button', { name: 'Export' })).toHaveCount(0);
+    await guest.getByRole('button', { name: '3D' }).click();
+    await expect(guest.getByRole('region', { name: '3D floor plan viewer' }).locator('canvas').first()).toBeVisible({ timeout: 60_000 });
+    await expect(guest.getByRole('button', { name: 'Edit Mode' })).toHaveCount(0);
+    await expect(guest.getByRole('button', { name: 'Export Blender Scene' })).toHaveCount(0);
   } finally { await ctx.close(); }
 });
 

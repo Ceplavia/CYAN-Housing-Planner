@@ -67,7 +67,7 @@
 <div class="min-h-screen bg-gray-50">
   <div class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
     <div class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-      <a href={`${base}/`} class="text-2xl font-bold text-white">{$t('library.title')}</a>
+      <a href={`${base}/`} class="text-2xl font-bold text-white">CYAN Housing Planner</a>
       <div class="flex items-center gap-3">
         <LanguageSwitcher />
         <a href={`${base}/`} class="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20">
@@ -88,12 +88,6 @@
           {$t(label)}
         </button>
       {/each}
-      {#if user?.isAdmin}
-        <a href={`${base}/admin`}
-          class="whitespace-nowrap rounded-lg px-4 py-2.5 text-left text-sm font-medium text-gray-500 hover:bg-white/60">
-          {$t('account.tab.admin')}
-        </a>
-      {/if}
     </nav>
 
     <div class="flex-1 min-w-0 space-y-6">

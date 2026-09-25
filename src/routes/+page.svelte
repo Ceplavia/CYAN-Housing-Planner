@@ -168,7 +168,7 @@
   <div class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
     <div class="max-w-5xl mx-auto px-6 py-5 flex flex-wrap gap-4 items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-white">{$t('library.title')}</h1>
+        <h1 class="text-2xl font-bold text-white">CYAN Housing Planner</h1>
         <p class="text-sm text-white/50 mt-0.5">{!user ? $t('auth.prompt') : loading ? $t('library.loading') : $t(projects.length === 1 ? 'library.countOne' : 'library.countMany', { count: projects.length })}</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">

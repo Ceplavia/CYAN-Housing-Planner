@@ -37,7 +37,7 @@
 <div class="min-h-screen bg-gray-50">
   <div class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
     <div class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-      <a href={`${base}/`} class="text-2xl font-bold text-white">{$t('library.title')}</a>
+      <a href={`${base}/`} class="text-2xl font-bold text-white">CYAN Housing Planner</a>
       <LanguageSwitcher />
     </div>
   </div>

@@ -80,7 +80,7 @@
 <div class="min-h-screen bg-gray-50">
   <div class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-      <span class="text-lg font-bold text-white">{$t('share.viewTitle')}</span>
+      <span class="text-lg font-bold text-white">CYAN Housing Planner</span>
       <div class="flex items-center gap-3">
         {#if vm.phase === 'view'}
           <div class="rounded-lg bg-white/10 p-0.5 flex text-sm font-medium text-white">
@@ -128,7 +128,7 @@
         </div>
       {:else}
         <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm" style="height: 78vh">
-          {#if ThreeViewer}<ThreeViewer />{:else}<p class="p-10 text-center text-sm text-gray-400">{$t('share.loading')}</p>{/if}
+          {#if ThreeViewer}<ThreeViewer readonly />{:else}<p class="p-10 text-center text-sm text-gray-400">{$t('share.loading')}</p>{/if}
         </div>
       {/if}
     </div>
