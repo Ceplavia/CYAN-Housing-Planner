@@ -69,8 +69,8 @@ Open http://localhost:3000, sign in as the admin account (created from the env v
 |---|---|---|
 | `PORT` | `3000` | Listen port inside the container |
 | `DATA_DIR` | `/data` (`data/` outside Docker) | SQLite database directory |
-| `ADMIN_USERNAME` | — | With `ADMIN_PASSWORD`, ensures this user exists as an admin at every boot — also the password-reset path for that account |
-| `ADMIN_PASSWORD` | — | The env admin's password; rotated into the DB on each boot while set |
+| `ADMIN_USERNAME` | `admin` | Admin created on the **first boot of a fresh database** only; ignored afterwards |
+| `ADMIN_PASSWORD` | generated | Password for the seeded admin — if unset a random one is printed to the log once |
 | `MAX_PROJECTS_PER_USER` | `50` | Overrides the `free` plan quota from `plans.json` |
 | `PLANS_FILE` | `plans.json` | Path to the plan catalog; mount your own with `-v ./plans.json:/app/plans.json` |
 | `REGISTRATION_OPEN` | `true` | `false` closes public sign-ups |
@@ -79,6 +79,18 @@ Open http://localhost:3000, sign in as the admin account (created from the env v
 | `ORIGIN` | request origin | Public URL when behind a reverse proxy (e.g. `https://plans.example.com`) |
 
 Running without Docker: `npm run build` then `DATA_DIR=data PORT=3000 node build/index.js`.
+
+### Admin recovery
+
+Env credentials only seed the very first database — later restarts never touch stored passwords, so upgrading the image cannot roll a changed admin password back to the env value. To force-reset any account's password (and optionally grant admin) inside the container:
+
+```bash
+docker exec -it <container> node cli.mjs set-password <username>          # masked prompt
+docker exec -it <container> node cli.mjs set-password <username> --admin  # also grants admin
+docker exec <container> node cli.mjs list-users
+```
+
+The same commands work on the host with `DATA_DIR=<data folder> node cli.mjs …`. A reset clears that user's sessions.
 
 ---
 

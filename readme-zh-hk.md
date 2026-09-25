@@ -69,8 +69,8 @@ docker run -d -p 3000:3000 -v cyan-data:/data \
 |---|---|---|
 | `PORT` | `3000` | Container 內的監聽埠 |
 | `DATA_DIR` | `/data`（Docker 以外使用 `data/`） | SQLite 資料庫目錄 |
-| `ADMIN_USERNAME` | — | 配合 `ADMIN_PASSWORD`，每次啟動時確保此用户存在且為管理員 — 亦是該帳號的密碼重設通道 |
-| `ADMIN_PASSWORD` | — | 環境變數管理員的密碼；設定後每次啟動都會同步至資料庫 |
+| `ADMIN_USERNAME` | `admin` | 只在**全新資料庫的首次啟動**時建立管理員；之後啟動一律忽略 |
+| `ADMIN_PASSWORD` | 自動生成 | 初始管理員密碼 — 未設定時會隨機生成一次並輸出至日誌 |
 | `MAX_PROJECTS_PER_USER` | `50` | 覆寫 `plans.json` 中 `free` plan 的配額 |
 | `PLANS_FILE` | `plans.json` | 計劃目錄檔案路徑；可以 `-v ./plans.json:/app/plans.json` 映射自訂檔案 |
 | `REGISTRATION_OPEN` | `true` | `false` 會關閉公開註冊 |
@@ -78,7 +78,19 @@ docker run -d -p 3000:3000 -v cyan-data:/data \
 | `BODY_SIZE_LIMIT` | `64M` | 請求 body 上限 — 大型圖紙及圖紙庫恢復所需 |
 | `ORIGIN` | 請求的 origin | 反向代理後的公開網址（例如 `https://plans.example.com`） |
 
-不使用 Docker：執行 `npm run build` 後以 `DATA_DIR=data PORT=3000 node build/index.js` 啟動。
+不使用 Docker：`npm run build` 然後 `DATA_DIR=data PORT=3000 node build/index.js`。
+
+### 管理員密碼重設
+
+環境變數只會在首次初始化資料庫時生效，之後啟動不會覆寫已儲存的密碼，升級映像檔也不會把已更改的管理員密碼還原。需要強制重設任何帳號密碼（可順便授予管理員權限）時，在容器內執行：
+
+```bash
+docker exec -it <容器名> node cli.mjs set-password <用户名>          # 隱藏輸入密碼
+docker exec -it <容器名> node cli.mjs set-password <用户名> --admin  # 同時授予管理員
+docker exec <容器名> node cli.mjs list-users
+```
+
+在主機上亦可使用：`DATA_DIR=<資料目錄> node cli.mjs …`。重設後該用户的所有工作階段會被清除。
 
 ---
 

@@ -17,6 +17,8 @@ COPY --from=build /app/package.json ./
 COPY --from=build /app/build ./build
 # Plan catalog (default quotas); override with -v ./plans.json:/app/plans.json.
 COPY --from=build /app/plans.json ./plans.json
+# Operator CLI: docker exec -it <container> node cli.mjs set-password <user>
+COPY --from=build /app/cli.mjs ./cli.mjs
 # /data holds the SQLite database; mount a volume to keep accounts and plans.
 RUN mkdir -p /data && chown node:node /data
 VOLUME /data

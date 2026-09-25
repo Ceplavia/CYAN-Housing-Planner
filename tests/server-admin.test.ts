@@ -26,49 +26,35 @@ afterAll(() => {
 });
 
 describe('admin bootstrap', () => {
-  it('syncs the env admin on every boot', async () => {
+  it('honours env credentials only while the database is empty', async () => {
     const db = database();
-    await bootstrapAdmin(); // no env → no-op
-    expect(db.prepare('SELECT COUNT(*) n FROM users').get()).toEqual({ n: 0 });
+    // Fresh database → an admin is seeded even without env (generated password).
+    await bootstrapAdmin();
+    expect((db.prepare('SELECT COUNT(*) n FROM users WHERE is_admin = 1').get() as { n: number }).n).toBe(1);
 
+    // Re-run against a wiped table with env creds → seeded from env.
+    db.prepare('DELETE FROM users').run();
     process.env.ADMIN_USERNAME = 'root';
     process.env.ADMIN_PASSWORD = 's3cret-admin';
     await bootstrapAdmin();
-    const root = db.prepare('SELECT id, is_admin FROM users WHERE username = ?').get('root') as { id: string; is_admin: number };
-    expect(root.is_admin).toBe(1);
     expect(verifyUser('root', dg('s3cret-admin')).isAdmin).toBe(true);
 
-    // The env pair always ensures its admin — a second user gets its own row,
-    // which doubles as the password-recovery path.
+    // Once users exist the env pair is ignored — no re-sync, no new admin,
+    // so an image upgrade can never rotate a changed password back.
+    createUser('alice', dg('alice-pass-1'));
     process.env.ADMIN_USERNAME = 'root2';
     process.env.ADMIN_PASSWORD = 'other-pass';
     await bootstrapAdmin();
-    expect(db.prepare('SELECT COUNT(*) n FROM users').get()).toEqual({ n: 2 });
-    expect(verifyUser('root2', dg('other-pass')).isAdmin).toBe(true);
+    expect((db.prepare('SELECT COUNT(*) n FROM users').get() as { n: number }).n).toBe(2);
+    expect(verifyUser('root', dg('s3cret-admin')).isAdmin).toBe(true);
+    expect(() => verifyUser('root2', dg('other-pass'))).toThrow(AuthError);
 
-    // Re-syncing rotates the stored credential back to the env password.
-    process.env.ADMIN_USERNAME = 'root2';
+    // Even changing the env password mid-life cannot touch the stored hash.
+    process.env.ADMIN_USERNAME = 'root';
     process.env.ADMIN_PASSWORD = 'rotated-pass';
     await bootstrapAdmin();
-    expect(() => verifyUser('root2', dg('other-pass'))).toThrow(AuthError);
-    expect(verifyUser('root2', dg('rotated-pass')).isAdmin).toBe(true);
-    db.prepare('DELETE FROM users WHERE username = ?').run('root2');
-    delete process.env.ADMIN_USERNAME;
-    delete process.env.ADMIN_PASSWORD;
-  });
-
-  it('promotes an existing matching user instead of duplicating', async () => {
-    const db = database();
-    // Remove the bootstrap admin so the env seeding path is exercised again.
-    db.prepare('DELETE FROM users WHERE is_admin = 1').run();
-    const plain = createUser('Frances', dg('a long enough password'));
-    expect(plain.isAdmin).toBe(false);
-    process.env.ADMIN_USERNAME = 'frances'; // case-insensitive match
-    process.env.ADMIN_PASSWORD = 'unused';
-    await bootstrapAdmin();
-    expect((db.prepare('SELECT is_admin FROM users WHERE id = ?').get(plain.id) as { is_admin: number }).is_admin).toBe(1);
-    expect(db.prepare('SELECT COUNT(*) n FROM users WHERE username = ?').get('frances')).toEqual({ n: 1 });
-    expect(verifyUser('Frances', dg('unused')).isAdmin).toBe(true); // env password becomes the credential
+    expect(verifyUser('root', dg('s3cret-admin')).isAdmin).toBe(true);
+    expect(() => verifyUser('root', dg('rotated-pass'))).toThrow(AuthError);
     delete process.env.ADMIN_USERNAME;
     delete process.env.ADMIN_PASSWORD;
   });
