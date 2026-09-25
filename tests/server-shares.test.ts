@@ -14,6 +14,7 @@ const dg = (p: string) => createHash('sha256').update(`cyan-housing-planner:v1:$
 const { createUser } = await import('$lib/server/auth');
 const lib = await import('$lib/server/userLibrary');
 const shares = await import('$lib/server/shares');
+const { runJanitorOnce } = await import('$lib/server/janitor');
 
 afterAll(() => {
   resetDatabaseForTests();
@@ -99,5 +100,20 @@ describe('share links', () => {
     expect(() => shares.updateShare(b.id, 'hers', { password: 'pwn' })).toThrowError(/no share link/);
     expect(shares.deleteShare(b.id, 'hers')).toBe(false);
     expect(shares.getShare(a.id, 'hers')!.password).toBe('keep');
+  });
+  it('janitor removes shares expired over 7 days and dead sessions', () => {
+    const user = createUser('Cleaner', dg('a long enough password'));
+    project(user, 'old');
+    project(user, 'fresh');
+    const now = Date.now();
+    const stale = shares.createShare(user.id, 'old', { expiresAt: now - 8 * 86400000 });
+    shares.createShare(user.id, 'fresh', { expiresAt: now - 86400000 }); // expired < 7d ago: kept
+    const db = database();
+    db.prepare('INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)')
+      .run('dead-session', user.id, now - 1, now - 1);
+    runJanitorOnce(now);
+    expect(shares.resolveShare(stale.token)).toEqual({ status: 'missing' });
+    expect(shares.getShare(user.id, 'fresh')).not.toBeNull();
+    expect(db.prepare('SELECT COUNT(*) n FROM sessions WHERE token = ?').get('dead-session')).toEqual({ n: 0 });
   });
 });

@@ -11,7 +11,26 @@
     thumbnail?: string | null;
   } = $props();
 
-  const W = 960, H = 600; // 2x for crisp downloads
+  const W = 960, H = 640; // 2x for crisp downloads
+
+  // Greedy per-character wrap (CJK-safe) into at most maxLines lines; the
+  // final line gets an ellipsis when the text still overflows.
+  function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number): string[] {
+    const chars = [...text];
+    const lines: string[] = [];
+    let cur = '', i = 0;
+    while (i < chars.length && lines.length < maxLines) {
+      if (ctx.measureText(cur + chars[i]).width > maxWidth && cur) { lines.push(cur); cur = ''; }
+      else cur += chars[i++];
+    }
+    if (cur && lines.length < maxLines) lines.push(cur);
+    if (i < chars.length && lines.length) {
+      let last = lines[lines.length - 1];
+      while (last && ctx.measureText(last + '…').width > maxWidth) last = last.slice(0, -1);
+      lines[lines.length - 1] = last + '…';
+    }
+    return lines.length ? lines : [''];
+  }
   let canvas = $state<HTMLCanvasElement>();
   let cardUrl = $state<string | null>(null);
 
@@ -68,20 +87,23 @@
       ctx.fillText($t('share.cardNoPreview'), px + pw / 2, pad + ph / 2 + 9);
     }
 
-    // Footer
+    // Footer: project name wraps to two lines, then ellipsizes; the
+    // "shared by" line stays right-aligned on the first name line.
+    const nameW = W * 0.56, nameY = pad + qrSize + 72, lineH = 48;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#0f172a';
-    ctx.font = '700 44px system-ui, sans-serif';
-    const name = projectName || $t('library.untitled');
-    ctx.fillText(name.length > 26 ? name.slice(0, 25) + '…' : name, pad, pad + qrSize + 96);
+    ctx.font = '700 40px system-ui, sans-serif';
+    const lines = wrapLines(ctx, projectName || $t('library.untitled'), nameW, 2);
+    lines.forEach((line, i) => ctx.fillText(line, pad, nameY + i * lineH));
     ctx.textAlign = 'right';
     ctx.fillStyle = '#475569';
-    ctx.font = '400 32px system-ui, sans-serif';
-    ctx.fillText($t('share.cardBy', { name: owner }), W - pad, pad + qrSize + 96);
+    ctx.font = '400 30px system-ui, sans-serif';
+    const by = $t('share.cardBy', { name: owner });
+    ctx.fillText(wrapLines(ctx, by, W - pad - nameW - 32, 1)[0], W - pad, nameY);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '400 28px system-ui, sans-serif';
-    ctx.fillText('Created by CYAN Housing Planner', W / 2, H - 48);
+    ctx.font = '400 26px system-ui, sans-serif';
+    ctx.fillText('Created by CYAN Housing Planner', W / 2, H - 44);
 
     cardUrl = canvas.toDataURL('image/png');
   }

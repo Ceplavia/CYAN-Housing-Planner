@@ -1,8 +1,10 @@
 import type { Handle } from '@sveltejs/kit';
 import { SESSION_COOKIE, sessionUser } from '$lib/server/auth';
 import { bootstrapAdmin } from '$lib/server/bootstrap';
+import { startJanitor } from '$lib/server/janitor';
 
 void bootstrapAdmin();
+startJanitor();
 
 export const handle: Handle = async ({ event, resolve }) => {
   event.locals.user = sessionUser(event.cookies.get(SESSION_COOKIE));
