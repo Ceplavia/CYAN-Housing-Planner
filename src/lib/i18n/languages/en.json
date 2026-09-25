@@ -1534,5 +1534,10 @@
   "account.download": "Download",
   "account.backupFailed": "Could not download the backup. Try again.",
   "account.restore": "Restore…",
-  "account.import": "Import…"
+  "account.import": "Import…",
+  "share.card": "Share card",
+  "share.cardBy": "Shared by {name}",
+  "share.cardNoPreview": "No preview",
+  "share.cardDownload": "Download card",
+  "share.cardAlt": "Share card for {name} with a QR code linking to the shared plan"
 }

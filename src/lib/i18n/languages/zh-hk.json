@@ -1725,5 +1725,10 @@
   "account.download": "下載",
   "account.backupFailed": "下載備份失敗，請重試。",
   "account.restore": "恢復…",
-  "account.import": "匯入…"
+  "account.import": "匯入…",
+  "share.card": "分享卡片",
+  "share.cardBy": "由 {name} 分享",
+  "share.cardNoPreview": "暫無預覽圖",
+  "share.cardDownload": "下載卡片",
+  "share.cardAlt": "{name} 嘅分享卡片，附連往共享圖紙嘅 QR code"
 }

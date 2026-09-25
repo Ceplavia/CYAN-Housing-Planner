@@ -3,6 +3,7 @@
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import { modalDialog } from '$lib/utils/modalDialog';
+  import ShareCard from '$lib/components/ShareCard.svelte';
 
   interface Share {
     token: string;
@@ -12,9 +13,11 @@
     createdAt: number;
   }
 
-  let { projectId, projectName, onclose }: {
+  let { projectId, projectName, owner = '', thumbnail = null, onclose }: {
     projectId: string;
     projectName: string;
+    owner?: string;
+    thumbnail?: string | null;
     onclose: () => void;
   } = $props();
 
@@ -144,6 +147,7 @@
           </div>
           {#if expiryLabel}<p class="mt-1 text-xs {share.expiresAt && share.expiresAt < Date.now() ? 'text-red-600' : 'text-gray-500'}">{expiryLabel}</p>{/if}
         </div>
+        <ShareCard url={shareUrl} {projectName} {owner} {thumbnail} />
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label for="share-expiry-edit" class="block text-sm font-medium text-gray-700">{$t('share.expiry')}</label>

@@ -325,7 +325,7 @@
   {/if}
 
   {#if shareTarget}
-    <ShareDialog projectId={shareTarget.id} projectName={shareTarget.name} onclose={() => shareTarget = null} />
+    <ShareDialog projectId={shareTarget.id} projectName={shareTarget.name} owner={user?.username ?? ''} thumbnail={thumbnails[shareTarget.id]} onclose={() => shareTarget = null} />
   {/if}
 
   <!-- Template Modal -->

@@ -88,6 +88,14 @@ test('share dialog generates, edits, regenerates and revokes the link', async ({
   const url = await urlInput.inputValue();
   expect(url).toMatch(/\/share\/[A-Za-z0-9]{12}$/);
 
+  // QR share card renders a PNG and downloads it.
+  const cardImg = page.getByRole('img', { name: /Share card for Harbour Flat/ });
+  await expect(cardImg).toBeVisible();
+  await expect(cardImg).toHaveAttribute('src', /^data:image\/png/);
+  const cardDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download card' }).click();
+  expect((await cardDownload).suggestedFilename()).toMatch(/share-card\.png$/);
+
   // Edit the password and regenerate — the old token dies.
   await page.locator('#share-password-edit').fill('pw456');
   await page.getByRole('button', { name: 'Save changes' }).click();

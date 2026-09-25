@@ -1725,5 +1725,10 @@
   "account.download": "Baixar",
   "account.backupFailed": "Não foi possível baixar o backup. Tente novamente.",
   "account.restore": "Restaurar…",
-  "account.import": "Importar…"
+  "account.import": "Importar…",
+  "share.card": "Cartão de partilha",
+  "share.cardBy": "Partilhado por {name}",
+  "share.cardNoPreview": "Sem pré-visualização",
+  "share.cardDownload": "Baixar cartão",
+  "share.cardAlt": "Cartão de partilha de {name} com código QR para o plano"
 }
