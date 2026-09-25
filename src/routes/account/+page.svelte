@@ -10,6 +10,7 @@
   import PasswordRules from '$lib/components/PasswordRules.svelte';
   import { passwordDigest } from '$lib/passwordDigest';
   import { passwordValid } from '$lib/passwordRules';
+  import { PLAN_NAME_KEYS } from '$lib/planNames';
   import LibraryRestoreDialog from '$lib/components/LibraryRestoreDialog.svelte';
   import ProjectPackageDialog from '$lib/components/ProjectPackageDialog.svelte';
 
@@ -104,7 +105,7 @@
             </div>
             <div class="flex justify-between gap-4">
               <dt class="text-gray-500">{$t('account.plan')}</dt>
-              <dd class="font-medium text-gray-800">{user?.plan ?? 'free'}</dd>
+              <dd class="font-medium text-gray-800">{user?.plan ? (PLAN_NAME_KEYS[user.plan] ? $t(PLAN_NAME_KEYS[user.plan]) : user.plan) : $t('sub.free')}</dd>
             </div>
             {#if user && user.plan !== 'free' && user.planExpiresAt}
               <div class="flex justify-between gap-4">
