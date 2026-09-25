@@ -1430,7 +1430,6 @@
   "auth.newPassword": "New password",
   "auth.confirmPassword": "Confirm password",
   "auth.usernameHint": "3–32 characters: letters, numbers, dot, dash or underscore",
-  "auth.passwordHint": "At least 8 characters",
   "auth.needAccount": "New here?",
   "auth.haveAccount": "Already have an account?",
   "auth.error.credentials": "Wrong username or password.",
@@ -1578,5 +1577,10 @@
   "sub.soon": "Not available yet",
   "sub.start": "Get started",
   "admin.apply": "Apply plan change",
-  "account.planExpiry": "Plan expires"
+  "account.planExpiry": "Plan expires",
+  "auth.ruleLen": "8–32 characters",
+  "auth.ruleUpper": "An uppercase letter",
+  "auth.ruleLower": "A lowercase letter",
+  "auth.ruleDigit": "A digit",
+  "auth.error.rules": "The password doesn't meet the requirements listed."
 }

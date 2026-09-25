@@ -1621,7 +1621,6 @@
   "auth.newPassword": "新密碼",
   "auth.confirmPassword": "確認密碼",
   "auth.usernameHint": "3–32 個字元：字母、數字、點、連字號或底線",
-  "auth.passwordHint": "最少 8 個字元",
   "auth.needAccount": "未有帳戶？",
   "auth.haveAccount": "已有帳戶？",
   "auth.error.credentials": "用户名稱或密碼錯誤。",
@@ -1769,5 +1768,10 @@
   "sub.soon": "暫不可用",
   "sub.start": "開始使用",
   "admin.apply": "套用計劃變更",
-  "account.planExpiry": "計劃到期日"
+  "account.planExpiry": "計劃到期日",
+  "auth.ruleLen": "8–32 個字符",
+  "auth.ruleUpper": "最少一個大楷字母",
+  "auth.ruleLower": "最少一個細楷字母",
+  "auth.ruleDigit": "最少一個數字",
+  "auth.error.rules": "密碼未符合上列要求。"
 }

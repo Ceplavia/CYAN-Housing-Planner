@@ -4,7 +4,9 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { base } from '$app/paths';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
+  import PasswordRules from '$lib/components/PasswordRules.svelte';
   import { passwordDigest } from '$lib/passwordDigest';
+  import { passwordValid } from '$lib/passwordRules';
 
   let { data } = $props();
 
@@ -18,6 +20,7 @@
 
   async function submit() {
     if (busy) return;
+    if (!passwordValid(password)) { error = $t('auth.error.rules'); return; }
     if (password !== confirm) { error = $t('auth.error.mismatch'); return; }
     busy = true; error = null;
     try {
@@ -56,9 +59,9 @@
         </div>
         <div>
           <label for="register-password" class="block text-sm font-medium text-gray-700">{$t('auth.password')}</label>
-          <input id="register-password" type="password" bind:value={password} autocomplete="new-password" required minlength="8" disabled={busy}
+          <input id="register-password" type="password" bind:value={password} autocomplete="new-password" required minlength="8" maxlength="32" disabled={busy}
             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-blue-500" />
-          <p class="mt-1 text-xs text-gray-400">{$t('auth.passwordHint')}</p>
+          <PasswordRules {password} />
         </div>
         <div>
           <label for="register-confirm" class="block text-sm font-medium text-gray-700">{$t('auth.confirmPassword')}</label>
@@ -66,7 +69,7 @@
             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-blue-500" />
         </div>
         {#if error}<p role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-900">{authMessage(error, $locale)}</p>{/if}
-        <button type="submit" disabled={busy || !username || !password || !confirm}
+        <button type="submit" disabled={busy || !username || !passwordValid(password) || !confirm}
           class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40">
           {busy ? $t('auth.signingUp') : $t('auth.signUp')}
         </button>

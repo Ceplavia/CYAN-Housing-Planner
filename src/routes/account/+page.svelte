@@ -7,7 +7,9 @@
   import { sessionQuota, refreshSessionQuota } from '$lib/services/session';
   import { downloadActiveLibraryBackup } from '$lib/services/datastore';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
+  import PasswordRules from '$lib/components/PasswordRules.svelte';
   import { passwordDigest } from '$lib/passwordDigest';
+  import { passwordValid } from '$lib/passwordRules';
   import LibraryRestoreDialog from '$lib/components/LibraryRestoreDialog.svelte';
   import ProjectPackageDialog from '$lib/components/ProjectPackageDialog.svelte';
 
@@ -39,6 +41,7 @@
 
   async function changePassword() {
     if (busy) return;
+    if (!passwordValid(next)) { passwordError = $t('auth.error.rules'); passwordChanged = false; return; }
     if (next !== confirm) { passwordError = $t('auth.error.mismatch'); passwordChanged = false; return; }
     busy = true; passwordError = null; passwordChanged = false;
     try {
@@ -135,8 +138,9 @@
             </div>
             <div>
               <label for="account-next" class="block text-sm font-medium text-gray-700">{$t('auth.newPassword')}</label>
-              <input id="account-next" type="password" bind:value={next} autocomplete="new-password" required minlength="8" disabled={busy}
+              <input id="account-next" type="password" bind:value={next} autocomplete="new-password" required minlength="8" maxlength="32" disabled={busy}
                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-blue-500" />
+              <PasswordRules password={next} />
             </div>
             <div>
               <label for="account-confirm" class="block text-sm font-medium text-gray-700">{$t('auth.confirmPassword')}</label>
@@ -145,7 +149,7 @@
             </div>
             {#if passwordError}<p role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-900">{authMessage(passwordError, $locale)}</p>{/if}
             {#if passwordChanged}<p role="status" class="rounded-lg bg-green-50 p-3 text-sm text-green-800">{$t('account.passwordChanged')}</p>{/if}
-            <button type="submit" disabled={busy || !current || !next || !confirm}
+            <button type="submit" disabled={busy || !current || !passwordValid(next) || !confirm}
               class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40">
               {busy ? $t('account.saving') : $t('account.changePassword')}
             </button>

@@ -1621,7 +1621,6 @@
   "auth.newPassword": "Nova senha",
   "auth.confirmPassword": "Confirmar senha",
   "auth.usernameHint": "3–32 caracteres: letras, números, ponto, hífen ou sublinhado",
-  "auth.passwordHint": "Pelo menos 8 caracteres",
   "auth.needAccount": "Novo por aqui?",
   "auth.haveAccount": "Já tem uma conta?",
   "auth.error.credentials": "Usuário ou senha incorretos.",
@@ -1769,5 +1768,10 @@
   "sub.soon": "Ainda indisponível",
   "sub.start": "Começar",
   "admin.apply": "Aplicar alteração",
-  "account.planExpiry": "Plano expira"
+  "account.planExpiry": "Plano expira",
+  "auth.ruleLen": "8–32 caracteres",
+  "auth.ruleUpper": "Uma letra maiúscula",
+  "auth.ruleLower": "Uma letra minúscula",
+  "auth.ruleDigit": "Um número",
+  "auth.error.rules": "A palavra-passe não cumpre os requisitos indicados."
 }
