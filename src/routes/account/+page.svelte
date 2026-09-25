@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t, locale, type TranslationKey } from '$lib/i18n';
   import { authMessage } from '$lib/i18n/authMessages';
-  import { goto } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import { sessionQuota, refreshSessionQuota } from '$lib/services/session';
@@ -28,7 +28,12 @@
   let packageOpen = $state(false);
   let backupFailed = $state(false);
 
-  onMount(() => { void refreshSessionQuota(); });
+  onMount(() => {
+    void refreshSessionQuota();
+    // Plan/admin flags can change server-side between navigations — the
+    // layout snapshot is loaded once, so revalidate on entry.
+    void invalidateAll();
+  });
 
   $effect(() => { if (data && !user) goto(`${base}/`); });
 

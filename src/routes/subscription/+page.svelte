@@ -1,9 +1,15 @@
 <script lang="ts">
   import { t, type TranslationKey } from '$lib/i18n';
   import { base } from '$app/paths';
+  import { onMount } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
   import SiteHeader from '$lib/components/SiteHeader.svelte';
 
   let { data } = $props();
+
+  // The layout snapshot is loaded once per session — revalidate so a plan
+  // changed since sign-in shows immediately.
+  onMount(() => { void invalidateAll(); });
 
   // Feature bullets per plan id; the limit bullet interpolates the live
   // number from plans.json so the card always matches server enforcement.
