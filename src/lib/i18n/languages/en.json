@@ -1582,5 +1582,6 @@
   "auth.ruleUpper": "An uppercase letter",
   "auth.ruleLower": "A lowercase letter",
   "auth.ruleDigit": "A digit",
-  "auth.error.rules": "The password doesn't meet the requirements listed."
+  "auth.error.rules": "The password doesn't meet the requirements listed.",
+  "sub.namePro": "Pro"
 }

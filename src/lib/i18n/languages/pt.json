@@ -1773,5 +1773,6 @@
   "auth.ruleUpper": "Uma letra maiúscula",
   "auth.ruleLower": "Uma letra minúscula",
   "auth.ruleDigit": "Um número",
-  "auth.error.rules": "A palavra-passe não cumpre os requisitos indicados."
+  "auth.error.rules": "A palavra-passe não cumpre os requisitos indicados.",
+  "sub.namePro": "Pro"
 }

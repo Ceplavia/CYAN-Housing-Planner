@@ -1773,5 +1773,6 @@
   "auth.ruleUpper": "最少一個大楷字母",
   "auth.ruleLower": "最少一個細楷字母",
   "auth.ruleDigit": "最少一個數字",
-  "auth.error.rules": "密碼未符合上列要求。"
+  "auth.error.rules": "密碼未符合上列要求。",
+  "sub.namePro": "專業版"
 }
