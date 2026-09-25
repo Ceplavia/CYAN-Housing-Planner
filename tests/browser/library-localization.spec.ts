@@ -14,7 +14,7 @@ test('Portuguese library menus rename without changing geometry and cancel delet
   });
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Editor de plantas', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'CYAN Housing Planner', exact: true })).toBeVisible();
   await expect(page.getByText('1 projeto', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   const before = await savedProjects(page);

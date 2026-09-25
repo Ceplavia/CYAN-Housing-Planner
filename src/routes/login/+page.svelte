@@ -13,7 +13,7 @@
   let deactivateReason = $state('');
   let busy = $state(false);
 
-  $effect(() => { if (data.user) goto(`${base}/`); });
+  $effect(() => { if (data.user) goto(`${base}/dashboard`); });
 
   async function submit() {
     if (busy) return;
@@ -27,7 +27,7 @@
       const body = await res.json().catch(() => null);
       if (!res.ok) { error = body?.error ?? $t('auth.error.loginFailed'); deactivateReason = body?.reason ?? ''; return; }
       await invalidateAll();
-      await goto(`${base}/`);
+      await goto(`${base}/dashboard`);
     } catch {
       error = 'Could not reach the server. Check your connection and try again.';
     } finally { busy = false; }

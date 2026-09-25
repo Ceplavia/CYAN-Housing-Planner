@@ -149,7 +149,7 @@ for (const locale of ['en', 'pt']) test(`${locale}: update reload preserves fail
     await page.evaluate(() => { (window as any).failProjectWrites = false; });
     server.serve(server.current);
     await page.getByRole('button', { name: locale === 'pt' ? 'Salvar e recarregar' : 'Save and reload', exact: true }).click();
-    await expect(page).toHaveURL(`${server.url}/`);
+    await expect(page).toHaveURL(`${server.url}/dashboard`);
     expect((await savedProjects(page))['qa-deployment-save'].name).toBe(backup.name);
   } finally { await server.close(); }
 });

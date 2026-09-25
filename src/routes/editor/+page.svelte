@@ -447,7 +447,7 @@
       <p role="alert" class="max-w-lg px-6 text-center text-red-700">{projectServiceMessage(loadError, $locale)}</p>
       <button class="text-blue-700 underline" onclick={initializeEditor}>{$t('library.retry')}</button>
       <button class="text-blue-700 underline" onclick={backupLibrary}>{$t('library.backup')}</button>
-      <a class="text-blue-700 underline" href={`${base}/`}>{$t('editorRecovery.back')}</a>
+      <a class="text-blue-700 underline" href={`${base}/dashboard`}>{$t('editorRecovery.back')}</a>
     {:else}
       <p class="text-gray-400">{$t('editorRecovery.loading')}</p>
     {/if}

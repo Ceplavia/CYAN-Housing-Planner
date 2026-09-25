@@ -17,7 +17,7 @@ async function username(api: APIRequestContext): Promise<string> {
 test('non-admin visitors are bounced off /admin', async ({ page }) => {
   // The fixture signs in an ordinary account; the page guard redirects home.
   await page.goto('/admin');
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
 });
 
 test('admin API manages activation, bonus quota and admin flags', async ({ playwright }) => {

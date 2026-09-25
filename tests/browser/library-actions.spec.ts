@@ -58,6 +58,8 @@ for (const width of [1440, 390]) {
     await page.keyboard.press('d');
     await expect(page.getByRole('menuitem', { name: 'Delete', exact: true })).toBeFocused();
     await page.keyboard.press('Home'); await page.keyboard.press('ArrowDown');
+    await expect(page.getByRole('menuitem', { name: 'Share', exact: true })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
     await expect(page.getByRole('menuitem', { name: 'Rename', exact: true })).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(menu).toHaveCount(0); await expect(button).toBeFocused();
@@ -65,7 +67,7 @@ for (const width of [1440, 390]) {
     await expect(page.getByRole('menuitem', { name: 'Delete', exact: true })).toBeFocused();
     await page.keyboard.press('Tab'); await expect(menu).toHaveCount(0);
     await button.press('Enter'); await page.keyboard.press('Shift+Tab'); await expect(menu).toHaveCount(0);
-    await button.click(); await page.getByRole('heading', { name: 'Floor Plan Editor', exact: true }).click();
+    await button.click(); await page.getByRole('heading', { name: 'CYAN Housing Planner', exact: true }).click();
     await expect(menu).toHaveCount(0);
     // Moving to another project's trigger must dismiss the old menu without stealing focus.
     await button.press('Enter'); await trigger(page, 'Second project').focus();

@@ -18,6 +18,6 @@
   <div class="mt-5 flex gap-4">
     <button class="rounded bg-blue-600 px-4 py-2 text-white" onclick={retry}>Try again</button>
     {#if $currentProject}<button onclick={() => { if ($currentProject) exportAsJSON($currentProject); }}>Download JSON backup</button>{/if}
-    <a class="p-2 underline" href={`${base}/`}>Project library</a>
+    <a class="p-2 underline" href={`${base}/dashboard`}>Project library</a>
   </div>
 </main>
