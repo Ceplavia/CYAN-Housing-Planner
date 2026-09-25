@@ -21,10 +21,10 @@ Forked from the MIT-licensed [openplan3d](https://github.com/laanlabs/openPlan3D
 
 ### Accounts & storage
 - **Server-side library** — projects, thumbnails, version history and recovery data live in a SQLite file under `DATA_DIR`; nothing is kept in the browser
-- **Sign-up / sign-in** with cookie sessions; users only ever see their own plans
-- **Per-user project quota** — plan allowance from `plans.json` (`free` 50 / `pro` 200) + admin-granted bonus slots; paid plans carry an expiry date and fall back to `free`
-- **Share links** — per-project public links with optional password and 1/7/30-day expiry; regenerate or revoke anytime from the project menu
-- **Admin console** (`/admin`) — activate/deactivate accounts (with a reason shown at sign-in), change plans, grant bonus slots
+- **Sign-up / sign-in** with cookie sessions; users only ever see their own plans. Passwords travel as a SHA-256 digest and are stored as salted scrypt.
+- **Per-user project quota** — plan allowance from `plans.json` (`free` 50 / `pro` 200) + admin-granted bonus slots; paid plans expire back to `free`
+- **Share links** — per-project public links with optional password and expiry; a daily janitor clears long-expired links and dead sessions
+- **Admin console** (`/admin`) — paged, searchable user list: activate/deactivate accounts, set plans and expiry, grant bonus slots
 
 ### Drawing tools
 - Walls with snapping and angle constraints; doors & windows in multiple styles; straight/L/U stairs
@@ -45,7 +45,7 @@ Forked from the MIT-licensed [openplan3d](https://github.com/laanlabs/openPlan3D
 - Whole-library backup/restore from the project list
 
 ### Multi-language
-- English, Português, 繁體中文（香港）
+- English, Português, 繁體中文（香港） — language switcher in every page header, persisted per browser
 - Drop a new `<locale>.json` into [`src/lib/i18n/languages/`](src/lib/i18n/languages/) to add a language — see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
