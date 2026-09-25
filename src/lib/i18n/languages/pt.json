@@ -1674,8 +1674,6 @@
   "admin.confirmDeactivate": "Desativar",
   "admin.reason": "Motivo da desativação",
   "admin.reasonPlaceholder": "Motivo mostrado ao usuário (opcional)",
-  "admin.makeAdmin": "Tornar admin",
-  "admin.demote": "Remover admin",
   "library.share": "Compartilhar",
   "share.title": "Compartilhar planta",
   "share.subtitle": "Crie um link público para “{name}”. Qualquer pessoa com o link pode visualizar — sem conta.",
@@ -1712,5 +1710,11 @@
   "share.sharedBy": "Compartilhado por {owner} — visualização somente leitura",
   "share.loadFailed": "Não foi possível carregar esta planta compartilhada.",
   "share.rateLimited": "Muitas tentativas. Tente novamente em um minuto.",
-  "share.day1": "1 dia"
+  "share.day1": "1 dia",
+  "admin.search": "Buscar usuários",
+  "admin.searchPlaceholder": "Buscar usuário…",
+  "admin.total": "{count} usuários",
+  "admin.prev": "Anterior",
+  "admin.next": "Próxima",
+  "admin.noUsers": "Nenhum usuário encontrado."
 }

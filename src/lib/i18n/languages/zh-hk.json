@@ -1674,8 +1674,6 @@
   "admin.confirmDeactivate": "確認停用",
   "admin.reason": "停用原因",
   "admin.reasonPlaceholder": "顯示俾用户嘅原因（可留空）",
-  "admin.makeAdmin": "設為管理員",
-  "admin.demote": "移除管理員",
   "library.share": "分享",
   "share.title": "分享圖紙",
   "share.subtitle": "為「{name}」建立公開鏈接 — 任何人持有鏈接即可查看，唔使帳號。",
@@ -1712,5 +1710,11 @@
   "share.sharedBy": "由 {owner} 分享 — 唯讀檢視",
   "share.loadFailed": "載入分享圖紙失敗。",
   "share.rateLimited": "嘗試太多次，請一分鐘後再試。",
-  "share.day1": "1 日"
+  "share.day1": "1 日",
+  "admin.search": "搜索用户",
+  "admin.searchPlaceholder": "搜索用户名…",
+  "admin.total": "共 {count} 位用户",
+  "admin.prev": "上一頁",
+  "admin.next": "下一頁",
+  "admin.noUsers": "冇符合嘅用户。"
 }

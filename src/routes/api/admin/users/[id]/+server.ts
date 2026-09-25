@@ -12,7 +12,6 @@ export async function PATCH({ locals, params, request }) {
     if ('inactiveReason' in body) patch.inactiveReason = body.inactiveReason == null ? null : String(body.inactiveReason);
     if ('plan' in body) patch.plan = String(body.plan);
     if ('bonusProjects' in body) patch.bonusProjects = Number(body.bonusProjects);
-    if ('isAdmin' in body) patch.isAdmin = Boolean(body.isAdmin);
     updateUser(admin, params.id, patch);
     return json({ ok: true });
   } catch (error) {

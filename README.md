@@ -22,7 +22,7 @@ Forked from the MIT-licensed [openplan3d](https://github.com/laanlabs/openPlan3D
 - **Sign-up / sign-in** with cookie sessions; users only ever see their own plans
 - **Per-user project quota** — plan base allowance + admin-granted bonus slots
 - **Share links** — per-project public links with optional password and 1/7/30-day expiry; regenerate or revoke anytime from the project menu
-- **Admin console** (`/admin`) — activate/deactivate accounts (with a reason shown at sign-in), change plans, grant bonus slots, promote admins
+- **Admin console** (`/admin`) — activate/deactivate accounts (with a reason shown at sign-in), change plans, grant bonus slots
 
 ### Drawing tools
 - Walls with snapping and angle constraints; doors & windows in multiple styles; straight/L/U stairs

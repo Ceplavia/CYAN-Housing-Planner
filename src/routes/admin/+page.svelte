@@ -16,8 +16,13 @@
     createdAt: number;
   }
 
+  const PAGE_SIZE = 20;
+
   let { data } = $props();
   let users = $state<AdminUser[]>([]);
+  let total = $state(0);
+  let page = $state(1);
+  let q = $state('');
   let loadError = $state<string | null>(null);
   let busy = $state<string | null>(null);
   let rowError = $state<Record<string, string>>({});
@@ -25,16 +30,30 @@
   let deactivating = $state<string | null>(null);
   let reason = $state('');
 
+  const pageCount = $derived(Math.max(1, Math.ceil(total / PAGE_SIZE)));
+
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
   async function load() {
     loadError = null;
     try {
-      const res = await fetch(`${base}/api/admin/users`);
+      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+      if (q.trim()) params.set('q', q.trim());
+      const res = await fetch(`${base}/api/admin/users?${params}`);
       const body = await res.json().catch(() => null);
       if (!res.ok) { loadError = body?.error ?? `Request failed (${res.status})`; return; }
       users = body.users;
+      total = body.total;
+      // Deletions may leave the current page empty — fall back one page.
+      if (users.length === 0 && page > 1) { page -= 1; await load(); }
     } catch { loadError = 'Could not reach the server.'; }
   }
   onMount(() => { void load(); });
+
+  function onSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { page = 1; void load(); }, 250);
+  }
 
   async function patch(user: AdminUser, body: Record<string, unknown>) {
     if (busy) return;
@@ -68,7 +87,11 @@
 
   <div class="max-w-5xl mx-auto px-6 py-10">
     <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-gray-800">{$t('admin.title')}</h2>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-gray-800">{$t('admin.title')}</h2>
+        <input type="search" bind:value={q} oninput={onSearch} placeholder={$t('admin.searchPlaceholder')} aria-label={$t('admin.search')}
+          class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-blue-500" />
+      </div>
       {#if loadError}
         <p role="alert" class="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-900">{loadError}</p>
       {:else}
@@ -113,7 +136,7 @@
                       <span class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700" title={user.inactiveReason ?? ''}>{$t('admin.inactive')}</span>
                     {/if}
                   </td>
-                  <td class="py-3 space-x-2 whitespace-nowrap">
+                  <td class="py-3 whitespace-nowrap">
                     {#if user.isActive}
                       <button onclick={() => { deactivating = user.id; reason = ''; }} disabled={busy === user.id || user.id === data.user?.id}
                         class="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40">
@@ -125,10 +148,6 @@
                         {$t('admin.activate')}
                       </button>
                     {/if}
-                    <button onclick={() => void patch(user, { isAdmin: !user.isAdmin })} disabled={busy === user.id || user.id === data.user?.id}
-                      class="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                      {user.isAdmin ? $t('admin.demote') : $t('admin.makeAdmin')}
-                    </button>
                   </td>
                 </tr>
                 {#if deactivating === user.id}
@@ -146,10 +165,24 @@
                 {#if rowError[user.id]}
                   <tr><td colspan="6" class="pb-2"><p role="alert" class="rounded bg-red-50 px-2 py-1 text-xs text-red-900">{rowError[user.id]}</p></td></tr>
                 {/if}
+              {:else}
+                <tr><td colspan="6" class="py-8 text-center text-sm text-gray-400">{$t('admin.noUsers')}</td></tr>
               {/each}
             </tbody>
           </table>
         </div>
+        {#if pageCount > 1 || total > 0}
+          <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+            <span>{$t('admin.total', { count: total })}</span>
+            <div class="flex items-center gap-2">
+              <button onclick={() => { page -= 1; void load(); }} disabled={page <= 1}
+                class="rounded border border-gray-300 px-3 py-1 font-semibold disabled:opacity-40">{$t('admin.prev')}</button>
+              <span>{page} / {pageCount}</span>
+              <button onclick={() => { page += 1; void load(); }} disabled={page >= pageCount}
+                class="rounded border border-gray-300 px-3 py-1 font-semibold disabled:opacity-40">{$t('admin.next')}</button>
+            </div>
+          </div>
+        {/if}
       {/if}
     </section>
   </div>

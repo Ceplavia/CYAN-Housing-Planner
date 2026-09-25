@@ -22,29 +22,53 @@ export function requireAdmin(user: AuthUser | null): AuthUser {
   return user;
 }
 
-export function listUsers(): AdminUserRow[] {
-  const rows = database().prepare(`
+export interface UserQuery {
+  /** Case-insensitive substring match on the username. */
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface UserPage {
+  users: AdminUserRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export function listUsers(query: UserQuery = {}): UserPage {
+  const page = Math.max(1, Math.floor(query.page ?? 1));
+  const pageSize = Math.min(100, Math.max(1, Math.floor(query.pageSize ?? 20)));
+  const q = query.q?.trim() ?? '';
+  const where = q ? "WHERE u.username LIKE ? ESCAPE '\\'" : '';
+  const params: string[] = q ? [`%${q.replace(/[%_]/g, c => '\\' + c)}%`] : [];
+  const db = database();
+  const total = (db.prepare(`SELECT COUNT(*) AS n FROM users u ${where}`).get(...params) as { n: number }).n;
+  const rows = db.prepare(`
     SELECT u.id, u.username, u.plan, u.bonus_projects, u.is_admin, u.is_active,
            u.inactive_reason, u.created_at,
            (SELECT COUNT(*) FROM projects p WHERE p.user_id = u.id) AS project_count
-    FROM users u ORDER BY u.created_at
-  `).all() as unknown as {
+    FROM users u ${where} ORDER BY u.created_at LIMIT ? OFFSET ?
+  `).all(...params, pageSize, (page - 1) * pageSize) as unknown as {
     id: string; username: string; plan: string; bonus_projects: number;
     is_admin: number; is_active: number; inactive_reason: string | null;
     project_count: number; created_at: number;
   }[];
-  return rows.map(row => ({
-    id: row.id,
-    username: row.username,
-    plan: row.plan,
-    bonusProjects: row.bonus_projects,
-    isAdmin: row.is_admin === 1,
-    isActive: row.is_active === 1,
-    inactiveReason: row.inactive_reason,
-    projectCount: row.project_count,
-    projectLimit: planLimit(row.plan) + row.bonus_projects,
-    createdAt: row.created_at,
-  }));
+  return {
+    users: rows.map(row => ({
+      id: row.id,
+      username: row.username,
+      plan: row.plan,
+      bonusProjects: row.bonus_projects,
+      isAdmin: row.is_admin === 1,
+      isActive: row.is_active === 1,
+      inactiveReason: row.inactive_reason,
+      projectCount: row.project_count,
+      projectLimit: planLimit(row.plan) + row.bonus_projects,
+      createdAt: row.created_at,
+    })),
+    total, page, pageSize,
+  };
 }
 
 export interface AdminUserPatch {
@@ -52,20 +76,20 @@ export interface AdminUserPatch {
   inactiveReason?: string | null;
   plan?: string;
   bonusProjects?: number;
-  isAdmin?: boolean;
 }
 
 /**
- * Applies admin edits. An admin cannot deactivate or demote themselves, so a
- * deployment always keeps at least one reachable admin.
+ * Applies admin edits. Admin flags only ever come from the bootstrap env, so
+ * there is no grant/demote here. An admin cannot deactivate themselves, which
+ * keeps at least one reachable admin on every deployment.
  */
 export function updateUser(admin: AuthUser, userId: string, patch: AdminUserPatch): void {
   const db = database();
-  const target = db.prepare('SELECT id, username, is_admin FROM users WHERE id = ?').get(userId) as { id: string; username: string; is_admin: number } | undefined;
+  const target = db.prepare('SELECT id, username FROM users WHERE id = ?').get(userId) as { id: string; username: string } | undefined;
   if (!target) throw new AuthError(404, 'User not found.');
-  const self = target.id === admin.id;
-  if (patch.isActive === false && self) throw new AuthError(400, 'You cannot deactivate your own account.');
-  if (patch.isAdmin === false && self) throw new AuthError(400, 'You cannot remove your own admin access.');
+  if (patch.isActive === false && target.id === admin.id) {
+    throw new AuthError(400, 'You cannot deactivate your own account.');
+  }
 
   if (patch.isActive !== undefined) {
     db.prepare('UPDATE users SET is_active = ?, inactive_reason = ? WHERE id = ?')
@@ -84,9 +108,6 @@ export function updateUser(admin: AuthUser, userId: string, patch: AdminUserPatc
       throw new AuthError(400, 'Bonus projects must be a whole number between 0 and 100000.');
     }
     db.prepare('UPDATE users SET bonus_projects = ? WHERE id = ?').run(patch.bonusProjects, userId);
-  }
-  if (patch.isAdmin !== undefined) {
-    db.prepare('UPDATE users SET is_admin = ? WHERE id = ?').run(patch.isAdmin ? 1 : 0, userId);
   }
 }
 

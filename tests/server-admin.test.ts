@@ -72,14 +72,13 @@ describe('admin user management', () => {
 
     updateUser(admin, user.id, { isActive: true });
     expect(verifyUser('Harper', 'a long enough password').id).toBe(user.id);
-    expect((listUsers().find(u => u.id === user.id))!.inactiveReason).toBeNull();
+    expect((listUsers().users.find(u => u.id === user.id))!.inactiveReason).toBeNull();
   });
 
-  it('refuses to let an admin deactivate or demote themselves', () => {
+  it('refuses to let an admin deactivate themselves', () => {
     const adminRow = database().prepare('SELECT * FROM users WHERE is_admin = 1 LIMIT 1').get() as any;
     const admin = { id: adminRow.id, username: adminRow.username, plan: 'free', bonusProjects: 0, isAdmin: true };
     expect(() => updateUser(admin, admin.id, { isActive: false })).toThrow(AuthError);
-    expect(() => updateUser(admin, admin.id, { isAdmin: false })).toThrow(AuthError);
     expect(() => updateUser(admin, 'missing', { isActive: false })).toThrow(AuthError);
   });
 
@@ -91,7 +90,7 @@ describe('admin user management', () => {
     try {
       expect(lib.projectLimit({ ...user })).toBe(5);
       updateUser(admin, user.id, { bonusProjects: 3 });
-      const listed = listUsers().find(u => u.id === user.id)!;
+      const listed = listUsers().users.find(u => u.id === user.id)!;
       expect(listed.bonusProjects).toBe(3);
       expect(listed.projectLimit).toBe(8);
     } finally { delete process.env.MAX_PROJECTS_PER_USER; }

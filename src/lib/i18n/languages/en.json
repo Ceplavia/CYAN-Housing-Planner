@@ -1483,8 +1483,6 @@
   "admin.confirmDeactivate": "Deactivate",
   "admin.reason": "Deactivation reason",
   "admin.reasonPlaceholder": "Reason shown to the user (optional)",
-  "admin.makeAdmin": "Make admin",
-  "admin.demote": "Remove admin",
   "library.share": "Share",
   "share.title": "Share plan",
   "share.subtitle": "Create a public link to “{name}”. Anyone with the link can view it — no account needed.",
@@ -1521,5 +1519,11 @@
   "share.sharedBy": "Shared by {owner} — read-only view",
   "share.loadFailed": "Could not load this shared plan.",
   "share.rateLimited": "Too many attempts. Try again in a minute.",
-  "share.day1": "1 day"
+  "share.day1": "1 day",
+  "admin.search": "Search users",
+  "admin.searchPlaceholder": "Search username…",
+  "admin.total": "{count} users",
+  "admin.prev": "Prev",
+  "admin.next": "Next",
+  "admin.noUsers": "No users match."
 }
