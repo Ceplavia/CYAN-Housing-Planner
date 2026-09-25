@@ -1747,5 +1747,8 @@
   "landing.featLang": "Três idiomas",
   "landing.featLangDesc": "English, Português e 繁體中文（香港）— mude a qualquer momento no ícone de globo.",
   "landing.featLib": "Biblioteca rica",
-  "landing.featLibDesc": "Mobília, portas, janelas, escadas e materiais — arraste diretamente para a planta."
+  "landing.featLibDesc": "Mobília, portas, janelas, escadas e materiais — arraste diretamente para a planta.",
+  "library.perPage": "Projetos por página",
+  "library.perPageShort": "por página",
+  "library.pageOf": "Página {page} de {pages}"
 }

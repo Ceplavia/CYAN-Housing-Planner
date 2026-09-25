@@ -10,7 +10,7 @@
   import { openProject } from '$lib/services/projectOpening';
   import { createDefaultProject } from '$lib/stores/project';
   import { refreshSessionQuota } from '$lib/services/session';
-  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import SiteHeader from '$lib/components/SiteHeader.svelte';
   import AccountMenu from '$lib/components/AccountMenu.svelte';
   import WelcomeScreen from '$lib/components/WelcomeScreen.svelte';
   import LibraryRestoreDialog from '$lib/components/LibraryRestoreDialog.svelte';
@@ -27,6 +27,11 @@
 
   let projects = $state<{ id: string; name: string; updatedAt: string }[]>([]);
   let thumbnails = $state<Record<string, string | null>>({});
+  const PAGE_SIZES = [10, 15, 20, 30] as const;
+  let pageSize = $state(10);
+  let pageNum = $state(1);
+  const pageCount = $derived(Math.max(1, Math.ceil(projects.length / pageSize)));
+  const pageProjects = $derived(projects.slice((pageNum - 1) * pageSize, pageNum * pageSize));
   let showWelcome = $state(false);
   let restoreOpen = $state(false);
   let packageOpen = $state(false);
@@ -71,6 +76,8 @@
   }
 
   onMount(() => {
+    const savedSize = Number(localStorage.getItem('dash_pageSize'));
+    if ((PAGE_SIZES as readonly number[]).includes(savedSize)) pageSize = savedSize;
     if (!user) { loading = false; return; }
     void withLibraryError(async () => {
       await refreshProjects();
@@ -79,6 +86,13 @@
         showWelcome = true;
       }
     });
+  });
+
+  // Persist the chosen page size and keep the current page in range when
+  // the list or page size shrinks.
+  $effect(() => {
+    localStorage.setItem('dash_pageSize', String(pageSize));
+    if (pageNum > pageCount) pageNum = pageCount;
   });
 
   async function createProject(create: () => unknown) {
@@ -165,33 +179,24 @@
 
 <div class="min-h-screen bg-gray-50">
   <!-- Header -->
-  <div class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
-    <div class="max-w-5xl mx-auto px-6 py-5 flex flex-wrap gap-4 items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-white">CYAN Housing Planner</h1>
-        <p class="text-sm text-white/50 mt-0.5">{loading ? $t('library.loading') : $t(projects.length === 1 ? 'library.countOne' : 'library.countMany', { count: projects.length })}</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <button
-          onclick={() => showTemplateModal = true}
-          class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all flex items-center gap-2 border border-white/20"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          {$t('library.templates')}
-        </button>
-        <button
-          bind:this={newProjectButton}
-          onclick={newProject}
-          class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 flex items-center gap-2"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          {$t('library.new')}
-        </button>
-        {#if user}<AccountMenu username={user.username} isAdmin={user.isAdmin} />{/if}
-        <LanguageSwitcher />
-      </div>
-    </div>
-  </div>
+  <SiteHeader>
+    <button
+      onclick={() => showTemplateModal = true}
+      class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all flex items-center gap-2 border border-white/20"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      {$t('library.templates')}
+    </button>
+    <button
+      bind:this={newProjectButton}
+      onclick={newProject}
+      class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 flex items-center gap-2"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      {$t('library.new')}
+    </button>
+    {#if user}<AccountMenu username={user.username} isAdmin={user.isAdmin} />{/if}
+  </SiteHeader>
 
   <div class="max-w-5xl mx-auto px-6 py-8">
     {#if duplicating}<p role="status" class="mb-4 text-sm text-gray-500">{$t('library.duplicating')}</p>{/if}
@@ -227,7 +232,7 @@
       </div>
     {:else}
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {#each projects as project (project.id)}
+        {#each pageProjects as project (project.id)}
           <div class="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-200 relative">
             <!-- Thumbnail -->
             <a href={`${base}/editor?id=${encodeURIComponent(project.id)}`} aria-label={$t('library.openName', { name: project.name || $t('library.untitled') })} class="block">
@@ -259,6 +264,24 @@
               }} />
           </div>
         {/each}
+      </div>
+      <div class="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500">
+        <div class="flex items-center gap-2">
+          <span>{loading ? $t('library.loading') : $t(projects.length === 1 ? 'library.countOne' : 'library.countMany', { count: projects.length })}</span>
+          <select aria-label={$t('library.perPage')} bind:value={pageSize}
+            class="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm">
+            {#each PAGE_SIZES as size}<option value={size}>{size} {$t('library.perPageShort')}</option>{/each}
+          </select>
+        </div>
+        {#if pageCount > 1}
+          <div class="flex items-center gap-1">
+            <button onclick={() => pageNum -= 1} disabled={pageNum <= 1} aria-label={$t('admin.prev')}
+              class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">‹</button>
+            <span class="px-2">{$t('library.pageOf', { page: pageNum, pages: pageCount })}</span>
+            <button onclick={() => pageNum += 1} disabled={pageNum >= pageCount} aria-label={$t('admin.next')}
+              class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">›</button>
+          </div>
+        {/if}
       </div>
     {/if}
   </div>

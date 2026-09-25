@@ -1747,5 +1747,8 @@
   "landing.featLang": "三種語言",
   "landing.featLangDesc": "English、Português、繁體中文（香港）— 隨時透過地球圖標切換。",
   "landing.featLib": "豐富素材庫",
-  "landing.featLibDesc": "傢俬、門窗、樓梯及材質應有盡有，拖放即可使用。"
+  "landing.featLibDesc": "傢俬、門窗、樓梯及材質應有盡有，拖放即可使用。",
+  "library.perPage": "每頁專案數",
+  "library.perPageShort": "個 / 頁",
+  "library.pageOf": "第 {page} / {pages} 頁"
 }

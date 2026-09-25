@@ -1556,5 +1556,8 @@
   "landing.featLang": "Three languages",
   "landing.featLangDesc": "English, Português and 繁體中文（香港）— switch anytime from the globe icon.",
   "landing.featLib": "Rich asset library",
-  "landing.featLibDesc": "Furniture, doors, windows, stairs and materials — drag and drop straight onto your plan."
+  "landing.featLibDesc": "Furniture, doors, windows, stairs and materials — drag and drop straight onto your plan.",
+  "library.perPage": "Projects per page",
+  "library.perPageShort": "per page",
+  "library.pageOf": "Page {page} of {pages}"
 }

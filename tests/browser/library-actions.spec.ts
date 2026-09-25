@@ -67,7 +67,8 @@ for (const width of [1440, 390]) {
     await expect(page.getByRole('menuitem', { name: 'Delete', exact: true })).toBeFocused();
     await page.keyboard.press('Tab'); await expect(menu).toHaveCount(0);
     await button.press('Enter'); await page.keyboard.press('Shift+Tab'); await expect(menu).toHaveCount(0);
-    await button.click(); await page.getByRole('heading', { name: 'CYAN Housing Planner', exact: true }).click();
+    // A click on a non-interactive element dismisses the menu.
+    await button.click(); await page.getByText('stored securely on this server').click();
     await expect(menu).toHaveCount(0);
     // Moving to another project's trigger must dismiss the old menu without stealing focus.
     await button.press('Enter'); await trigger(page, 'Second project').focus();
