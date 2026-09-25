@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures';
 import { registerAccount } from './fixtures';
 import { readFile } from 'node:fs/promises';
-import { savedProjects, seedHistory, seedProject, seedThumbnail, storedRecords } from './storage';
+import { openDataTab, savedProjects, seedHistory, seedProject, seedThumbnail, storedRecords } from './storage';
 
 // Server-backed library coverage: persistence, backup round-trip and per-user
 // isolation — the behaviors IndexedDB used to guarantee inside one browser.
@@ -25,8 +25,8 @@ test('large projects persist across reloads and keep their raw bytes in backups'
   expect(saved.name).toBe('Renamed on the server');
   expect(saved.extensions).toEqual(source.extensions);
   const pending = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'Projects', exact: true }).click();
-  await page.getByRole('button', { name: 'Download library backup', exact: true }).click();
+  await openDataTab(page);
+  await page.getByRole('button', { name: 'Download', exact: true }).click();
   const backup = JSON.parse(await readFile((await (await pending).path())!, 'utf8'));
   expect(JSON.parse(backup.projects[source.id]).name).toBe('Renamed on the server');
 });

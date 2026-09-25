@@ -9,7 +9,9 @@
   import { projectStore, storageErrorMessage, downloadActiveLibraryBackup } from '$lib/services/datastore';
   import { openProject } from '$lib/services/projectOpening';
   import { createDefaultProject } from '$lib/stores/project';
-  import { refreshSessionQuota, signOut } from '$lib/services/session';
+  import { refreshSessionQuota } from '$lib/services/session';
+  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import AccountMenu from '$lib/components/AccountMenu.svelte';
   import WelcomeScreen from '$lib/components/WelcomeScreen.svelte';
   import LibraryRestoreDialog from '$lib/components/LibraryRestoreDialog.svelte';
   import ProjectPackageDialog from '$lib/components/ProjectPackageDialog.svelte';
@@ -186,19 +188,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             {$t('library.new')}
           </button>
-          <a
-            href={`${base}/account`}
-            class="px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 font-medium text-sm transition-all flex items-center gap-2 border border-white/20"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-            {user.username}
-          </a>
-          <button
-            onclick={() => void signOut()}
-            class="px-4 py-2.5 bg-white/10 text-white/80 rounded-lg hover:bg-white/20 font-medium text-sm transition-all border border-white/20"
-          >
-            {$t('auth.signOut')}
-          </button>
+          <AccountMenu username={user.username} isAdmin={user.isAdmin} />
         {:else}
           <a
             href={`${base}/login`}
@@ -213,6 +203,7 @@
             {$t('auth.signUp')}
           </a>
         {/if}
+        <LanguageSwitcher />
       </div>
     </div>
   </div>
@@ -236,13 +227,8 @@
       </div>
     {:else}
     {#if duplicating}<p role="status" class="mb-4 text-sm text-gray-500">{$t('library.duplicating')}</p>{/if}
-    <div class="mb-5 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500">
+    <div class="mb-5 text-sm text-gray-500">
       <p>{$t('library.local')}</p>
-      <div class="flex flex-wrap gap-4">
-        {#if !libraryError}<button class="font-semibold text-blue-600 underline" onclick={backupLibrary}>{$t('library.backup')}</button>{/if}
-        <button class="font-semibold text-blue-600 underline" onclick={openRestore}>{$t('library.restore')}</button>
-        <button class="font-semibold text-blue-600 underline" onclick={openPackage}>{$t('library.package')}</button>
-      </div>
     </div>
     {#if libraryError}
       <div role="alert" class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">

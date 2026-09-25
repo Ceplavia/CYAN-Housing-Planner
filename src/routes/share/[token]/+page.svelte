@@ -5,6 +5,7 @@
   import { loadProject } from '$lib/stores/project';
   import type { Project } from '$lib/models/types';
   import { projectToSVG } from '$lib/utils/export';
+  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
   type State =
     | { phase: 'loading' }
@@ -80,14 +81,15 @@
   <div class="bg-gradient-to-r from-slate-800 to-slate-700 shadow-sm">
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
       <span class="text-lg font-bold text-white">{$t('share.viewTitle')}</span>
-      {#if vm.phase === 'view'}
-        <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
+        {#if vm.phase === 'view'}
           <div class="rounded-lg bg-white/10 p-0.5 flex text-sm font-medium text-white">
             <button onclick={() => mode = '2d'} class="px-3 py-1 rounded-md {mode === '2d' ? 'bg-white text-slate-800' : 'hover:bg-white/10'}">2D</button>
             <button onclick={enter3D} class="px-3 py-1 rounded-md {mode === '3d' ? 'bg-white text-slate-800' : 'hover:bg-white/10'}">3D</button>
           </div>
-        </div>
-      {/if}
+        {/if}
+        <LanguageSwitcher />
+      </div>
     </div>
   </div>
 

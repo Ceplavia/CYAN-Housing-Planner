@@ -2,7 +2,7 @@ import { test, expect, type Page } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { readPackageZip, packageJSON } from '../../src/lib/utils/projectPackageZip';
-import { failProjectWrites, savedProjects, storedRecords } from './storage';
+import { failProjectWrites, openDataTab, savedProjects, storedRecords } from './storage';
 
 const fixture = resolve('tests/fixtures/native-project-package.zip');
 async function choose(page: Page, path = fixture) {
@@ -131,15 +131,19 @@ test('package cancellation, invalid file and quota retry preserve the existing l
   await context.addInitScript(() => localStorage.setItem('hasSeenWelcome', 'true'));
   const check = observe(page);
   await page.goto('/');
-  await page.getByRole('button', { name: 'New Project', exact: true }).click();
+  // Hydration race — retry until the click opens the editor.
+  await expect.poll(async () => {
+    if (!page.url().includes('/editor')) await page.getByRole('button', { name: 'New Project', exact: true }).click().catch(() => {});
+    return page.url().includes('/editor');
+  }).toBe(true);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await page.getByRole('link', { name: 'Projects', exact: true }).click();
   const before = await storedRecords(page);
-  await page.getByRole('button', { name: 'Import project package', exact: true }).click();
+  await openDataTab(page);
+  await page.getByRole('button', { name: 'Import…', exact: true }).click();
   await choose(page); await expect(page.getByRole('dialog')).toContainText('QA Project Package');
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   expect(await storedRecords(page)).toEqual(before);
-  await page.getByRole('button', { name: 'Import project package', exact: true }).click();
+  await page.getByRole('button', { name: 'Import…', exact: true }).click();
   await choose(page, resolve('tests/fixtures/library-backup.json'));
   await expect(page.getByRole('alert')).toContainText('Invalid project package');
   expect(await storedRecords(page)).toEqual(before);

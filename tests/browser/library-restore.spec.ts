@@ -1,7 +1,7 @@
 import { expect, test, type Page, type BrowserContext } from './fixtures';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { savedProjects, seedProject, storedRecords } from './storage';
+import { openDataTab, savedProjects, seedProject, storedRecords } from './storage';
 
 const file = resolve('tests/fixtures/library-backup.json');
 async function sourceProject() { return JSON.parse(JSON.parse(await readFile(file, 'utf8')).projects['qa-library-restore']); }
@@ -25,8 +25,11 @@ async function chooseBackup(page: Page, path = file) {
   await (await pending).setFiles(path);
 }
 // A click can land before hydration finishes; retry until the dialog opens.
-async function openRestoreDialog(page: Page, name = 'Restore library backup') {
+// The entry point lives on the account page's data tab now — the welcome
+// screen keeps its own "Restore a library backup" button.
+async function openRestoreDialog(page: Page, name = 'Restore…') {
   const dialog = page.getByRole('dialog', { name: 'Restore library backup', exact: true });
+  if (name === 'Restore…') await openDataTab(page);
   await expect.poll(async () => {
     if (await dialog.count() === 0) await page.getByRole('button', { name, exact: true }).click();
     return dialog.count();
@@ -51,7 +54,8 @@ async function clickUntilDownload(page: Page, name: string) {
   return pending;
 }
 async function libraryBackup(page: Page) {
-  const pending = clickUntilDownload(page, 'Download library backup');
+  await openDataTab(page);
+  const pending = clickUntilDownload(page, 'Download');
   return JSON.parse(await readFile((await (await pending).path())!, 'utf8'));
 }
 
@@ -72,6 +76,7 @@ for (const width of [1440, 390]) {
     await dialog.getByRole('button', { name: 'Restore as copies', exact: true }).click();
     await expect(dialog.getByRole('status')).toContainText('1 project restored.');
     await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+    await page.goto('/');
     await expect(page.getByRole('link', { name: `${source.name} (Restored copy)`, exact: true })).toBeVisible();
     const saved = await savedProjects(page), copy = Object.values(saved).find((p: any) => p.id !== source.id) as any;
     expect(saved[source.id]).toEqual(source); expect(copy.id).not.toBe(source.id);
@@ -82,6 +87,7 @@ for (const width of [1440, 390]) {
     const recovery: any = Object.values(backup.recovery).map(raw => JSON.parse(raw as string)).find(r => r.projects['damaged-plan']);
     expect(recovery.projects['damaged-plan']).toBe('{original damaged project bytes');
     expect(recovery.history[source.id]).toContain('{original damaged version bytes');
+    await page.goto('/');
     await page.getByRole('link', { name: copy.name, exact: true }).click();
     if (width < 768) await page.getByRole('button', { name: 'More actions', exact: true }).click();
     await page.getByRole('button', { name: 'Version History', exact: true }).click();
@@ -181,7 +187,7 @@ test('restoration keeps damaged backup entries as recovery data and restores the
   const backup = await libraryBackup(page);
   const archive = Object.values(backup.recovery).map(raw => JSON.parse(raw as string)).find((r: any) => r.projects['damaged-entry']);
   expect(archive.projects['damaged-entry']).toBe('{damaged destination library');
-  await page.reload(); await expect(page.getByRole('link', { name: 'QA Library Restore (Restored copy)', exact: true })).toBeVisible();
+  await page.goto('/'); await expect(page.getByRole('link', { name: 'QA Library Restore (Restored copy)', exact: true })).toBeVisible();
   check();
 });
 
@@ -233,10 +239,13 @@ test('a list refresh failure after commit does not offer to repeat a successful 
       : route.continue());
   await page.getByRole('button', { name: 'Restore as copies', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('status')).toContainText('1 project restored.');
-  await expect(page.getByRole('alert')).toContainText('Restoration finished, but the project list could not refresh.');
   await expect(page.getByRole('button', { name: 'Restore as copies', exact: true })).toHaveCount(0);
-  (globalThis as any).__failRefresh = false;
   await page.getByRole('button', { name: 'Done', exact: true }).click();
+  // Back on the library, the still-failing list shows the error banner — yet
+  // the committed copy is safe on the server.
+  await page.goto('/');
+  await expect(page.getByRole('alert')).toContainText('Could not refresh');
+  (globalThis as any).__failRefresh = false;
   await page.reload();
   await expect(page.getByRole('link', { name: `${source.name} (Restored copy)`, exact: true })).toHaveCount(1);
   expect(Object.keys(await savedProjects(page))).toHaveLength(2);

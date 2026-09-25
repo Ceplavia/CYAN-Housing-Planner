@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 /**
  * Storage helpers for the server-backed library. page.request shares the
@@ -60,6 +60,20 @@ export async function seedThumbnail(page: Page, id: string, dataUrl: string) {
 }
 
 /** Inject failure at the actual persistence boundary, without changing app code. */
+/** Library backup/restore/package actions live under the account page's data tab. */
+export async function openDataTab(page: Page) {
+  const heading = page.getByRole('heading', { name: 'Data & backups' });
+  const tab = page.getByRole('button', { name: 'Data & backups', exact: true });
+  // Drive the whole transition inside the poll: a pending client-side
+  // navigation back to '/' can race a fresh goto, so retry whatever is needed.
+  await expect.poll(async () => {
+    if (await heading.count() > 0) return true;
+    if (new URL(page.url()).pathname.endsWith('/account')) await tab.click().catch(() => {});
+    else await page.goto('/account');
+    return false;
+  }, { timeout: 15_000 }).toBe(true);
+}
+
 export async function failProjectWrites(page: Page, flag = 'failProjectWrites') {
   await page.evaluate(flag => { (window as any)[flag] = true; }, flag);
   await page.route(/\/api\/(projects|library)(\/|$|\?)/, async route => {
