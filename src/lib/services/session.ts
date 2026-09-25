@@ -4,7 +4,8 @@ export interface SessionUser {
   id: string;
   username: string;
   plan: string;
-  projectLimit: number | null;
+  bonusProjects: number;
+  isAdmin: boolean;
 }
 
 export interface SessionQuota {

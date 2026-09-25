@@ -16,7 +16,7 @@ export async function POST({ request, cookies, getClientAddress }) {
     setSessionCookie(cookies, token, request.headers.get('x-forwarded-proto') === 'https');
     return json({ username: user.username });
   } catch (error) {
-    if (error instanceof AuthError) return json({ error: error.message }, { status: error.status });
+    if (error instanceof AuthError) return json({ error: error.message, ...error.details }, { status: error.status });
     return json({ error: 'Could not sign in. Try again.' }, { status: 400 });
   }
 }

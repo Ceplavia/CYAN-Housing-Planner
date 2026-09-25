@@ -9,6 +9,7 @@
   let username = $state('');
   let password = $state('');
   let error = $state<string | null>(null);
+  let deactivateReason = $state('');
   let busy = $state(false);
 
   $effect(() => { if (data.user) goto(`${base}/`); });
@@ -23,7 +24,7 @@
         body: JSON.stringify({ username, password }),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok) { error = body?.error ?? $t('auth.error.loginFailed'); return; }
+      if (!res.ok) { error = body?.error ?? $t('auth.error.loginFailed'); deactivateReason = body?.reason ?? ''; return; }
       await invalidateAll();
       await goto(`${base}/`);
     } catch {
@@ -53,7 +54,12 @@
           <input id="login-password" type="password" bind:value={password} autocomplete="current-password" required disabled={busy}
             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-blue-500" />
         </div>
-        {#if error}<p role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-900">{authMessage(error, $locale)}</p>{/if}
+        {#if error}
+          <p role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-900">
+            {authMessage(error, $locale)}
+            {#if error === 'account.deactivated' && deactivateReason}<br /><span class="font-medium">{deactivateReason}</span>{/if}
+          </p>
+        {/if}
         <button type="submit" disabled={busy || !username || !password}
           class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40">
           {busy ? $t('auth.signingIn') : $t('auth.signIn')}

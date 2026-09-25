@@ -105,6 +105,16 @@
       </form>
     </section>
 
+    {#if user?.isAdmin}
+      <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm flex items-center justify-between">
+        <p class="text-sm text-gray-500">{$t('admin.help')}</p>
+        <a href={`${base}/admin`}
+          class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+          {$t('admin.open')}
+        </a>
+      </section>
+    {/if}
+
     <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm flex items-center justify-between">
       <p class="text-sm text-gray-500">{$t('account.signOutHelp')}</p>
       <button onclick={() => void signOut()}

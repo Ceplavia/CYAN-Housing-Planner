@@ -1,7 +1,7 @@
 import { test as base, expect, type APIRequest, type APIRequestContext, type BrowserContext } from '@playwright/test';
 
 export const TEST_PASSWORD = 'e2e-test-password';
-const BASE = 'http://127.0.0.1:4188';
+export const BASE = 'http://127.0.0.1:4188';
 
 export async function registerAccount(request: APIRequest): Promise<APIRequestContext> {
   const api = await request.newContext();

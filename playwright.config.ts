@@ -1,4 +1,11 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
+
+// Each suite run gets a throwaway SQLite database so tests never touch the
+// developer's real ./data directory. ADMIN_* seed the admin console specs.
+const testDataDir = mkdtempSync(join(tmpdir(), 'cyan-pw-data-'));
 
 // Use the real Node production build. Each test gets an empty browser profile;
 // no credentials or Firebase services are needed.
@@ -44,6 +51,9 @@ export default defineConfig({
       HANDOFF_UPLOADS_ENABLED: 'false', HANDOFF_BUCKET: '',
       BODY_SIZE_LIMIT: '64M',
       AUTH_RATE_LIMIT: '0',
+      DATA_DIR: testDataDir,
+      ADMIN_USERNAME: 'e2e_admin',
+      ADMIN_PASSWORD: 'e2e-admin-password',
     },
   },
 });

@@ -71,11 +71,15 @@ describe('server project storage', () => {
       expect(lib.saveProject(limited, 'p1', JSON.stringify({ ...project, id: 'p1' }), 1)).toBe(2); // updates still work
     } finally { delete process.env.MAX_PROJECTS_PER_USER; }
 
-    // A per-user override stands in for a future subscription tier.
-    database().prepare('UPDATE users SET project_limit = 3 WHERE id = ?').run(limited.id);
-    limited.projectLimit = 3;
-    expect(lib.saveProject(limited, 'p2', JSON.stringify({ ...project, id: 'p2' }), null)).toBe(1);
-    expect(lib.projectCount(limited.id)).toBe(2);
+    // An admin-granted bonus stands in for a future subscription tier:
+    // base plan 1 + bonus 2 = effective limit 3.
+    process.env.MAX_PROJECTS_PER_USER = '1';
+    try {
+      database().prepare('UPDATE users SET bonus_projects = 2 WHERE id = ?').run(limited.id);
+      limited.bonusProjects = 2;
+      expect(lib.saveProject(limited, 'p2', JSON.stringify({ ...project, id: 'p2' }), null)).toBe(1);
+      expect(lib.projectCount(limited.id)).toBe(2);
+    } finally { delete process.env.MAX_PROJECTS_PER_USER; }
   });
 
   it('stores thumbnails, history and deletes them with the project', () => {
@@ -124,13 +128,14 @@ describe('server library backup and restore', () => {
 
     // A quota breach mid-restore rolls the whole restore back.
     const limited = createUser('Quota', 'storage password');
-    database().prepare('UPDATE users SET project_limit = 1 WHERE id = ?').run(limited.id);
-    limited.projectLimit = 1;
-    const two = JSON.stringify({
-      a: JSON.stringify({ ...project, id: 'a' }),
-      b: JSON.stringify({ ...project, id: 'b' }),
-    });
-    await expect(lib.restoreLibrary(limited, two)).rejects.toThrow(/Project limit reached/);
-    expect(lib.projectCount(limited.id)).toBe(0); // nothing half-restored
+    process.env.MAX_PROJECTS_PER_USER = '1';
+    try {
+      const two = JSON.stringify({
+        a: JSON.stringify({ ...project, id: 'a' }),
+        b: JSON.stringify({ ...project, id: 'b' }),
+      });
+      await expect(lib.restoreLibrary(limited, two)).rejects.toThrow(/Project limit reached/);
+      expect(lib.projectCount(limited.id)).toBe(0); // nothing half-restored
+    } finally { delete process.env.MAX_PROJECTS_PER_USER; }
   });
 });

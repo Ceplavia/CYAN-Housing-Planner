@@ -14,10 +14,32 @@ export interface AuthUser {
   id: string;
   username: string;
   plan: string;
-  projectLimit: number | null;
+  /** Extra project slots granted by an admin on top of the plan allowance. */
+  bonusProjects: number;
+  isAdmin: boolean;
 }
 
-function hashPassword(password: string): string {
+interface UserRow {
+  id: string;
+  username: string;
+  pass_hash: string;
+  plan: string;
+  bonus_projects: number;
+  is_admin: number;
+  is_active: number;
+  inactive_reason: string | null;
+}
+
+const USER_COLUMNS = 'id, username, pass_hash, plan, bonus_projects, is_admin, is_active, inactive_reason';
+
+function toAuthUser(row: UserRow): AuthUser {
+  return {
+    id: row.id, username: row.username, plan: row.plan,
+    bonusProjects: row.bonus_projects, isAdmin: row.is_admin === 1,
+  };
+}
+
+export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString('hex');
   const key = scryptSync(password, salt, SCRYPT.keylen, SCRYPT).toString('hex');
   return `scrypt$${SCRYPT.N}$${SCRYPT.r}$${SCRYPT.p}$${salt}$${key}`;
@@ -34,7 +56,7 @@ function verifyPassword(password: string, stored: string): boolean {
 }
 
 export class AuthError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public details?: Record<string, string>) {
     super(message);
     this.name = 'AuthError';
   }
@@ -58,7 +80,7 @@ export function createUser(username: string, password: string): AuthUser {
     }
     throw error;
   }
-  return { id, username: name, plan: 'free', projectLimit: null };
+  return { id, username: name, plan: 'free', bonusProjects: 0, isAdmin: false };
 }
 
 /** Deletes the user row; foreign keys cascade to sessions and all library data. */
@@ -69,13 +91,16 @@ export function deleteUser(userId: string): void {
 const DUMMY_HASH = `scrypt$${SCRYPT.N}$${SCRYPT.r}$${SCRYPT.p}$${'0'.repeat(32)}$${'0'.repeat(128)}`;
 
 export function verifyUser(username: string, password: string): AuthUser {
-  const row = database().prepare('SELECT id, username, pass_hash, plan, project_limit FROM users WHERE username = ?')
-    .get(username.trim()) as { id: string; username: string; pass_hash: string; plan: string; project_limit: number | null } | undefined;
+  const row = database().prepare(`SELECT ${USER_COLUMNS} FROM users WHERE username = ?`)
+    .get(username.trim()) as UserRow | undefined;
   // Unknown usernames still pay the scrypt cost so the response time does not reveal them.
   if (!verifyPassword(password, row?.pass_hash ?? DUMMY_HASH) || !row) {
     throw new AuthError(401, 'Wrong username or password.');
   }
-  return { id: row.id, username: row.username, plan: row.plan, projectLimit: row.project_limit };
+  if (!row.is_active) {
+    throw new AuthError(403, 'account.deactivated', { reason: row.inactive_reason ?? '' });
+  }
+  return toAuthUser(row);
 }
 
 export function changePassword(userId: string, current: string, next: string, keepToken?: string): void {
@@ -104,15 +129,16 @@ export function createSession(userId: string): { token: string; expiresAt: numbe
 export function sessionUser(token: string | undefined): AuthUser | null {
   if (!token) return null;
   const row = database().prepare(`
-    SELECT u.id, u.username, u.plan, u.project_limit, s.expires_at
+    SELECT ${USER_COLUMNS}, s.expires_at
     FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ?
-  `).get(token) as { id: string; username: string; plan: string; project_limit: number | null; expires_at: number } | undefined;
-  if (!row) return null;
+  `).get(token) as (UserRow & { expires_at: number }) | undefined;
+  // Deactivated accounts lose their sessions immediately — same as expiry.
+  if (!row || !row.is_active) return null;
   if (row.expires_at < Date.now()) {
     database().prepare('DELETE FROM sessions WHERE token = ?').run(token);
     return null;
   }
-  return { id: row.id, username: row.username, plan: row.plan, projectLimit: row.project_limit };
+  return toAuthUser(row);
 }
 
 export function deleteSession(token: string | undefined): void {

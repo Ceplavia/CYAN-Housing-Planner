@@ -7,8 +7,11 @@ export function GET({ locals }) {
   if (!user) return json({ user: null });
   return json({
     user: {
+      id: user.id,
       username: user.username,
       plan: user.plan,
+      bonusProjects: user.bonusProjects,
+      isAdmin: user.isAdmin,
       projectCount: projectCount(user.id),
       projectLimit: projectLimit(user),
     },

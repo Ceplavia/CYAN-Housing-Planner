@@ -150,10 +150,15 @@ Environment variables:
 |---|---|---|
 | `PORT` | `3000` | Listen port inside the container |
 | `DATA_DIR` | `/data` (`data/` outside Docker) | SQLite database directory |
-| `MAX_PROJECTS_PER_USER` | `50` | Per-account project quota (per-user `project_limit` overrides; reserved for plan/subscription tiers) |
+| `MAX_PROJECTS_PER_USER` | `50` | Per-account project quota — the `free` plan base; admins can add per-user bonus slots |
+| `ADMIN_USERNAME` | — | With `ADMIN_PASSWORD`, grants admin to this user at startup when no admin exists (creates the account if needed) |
+| `ADMIN_PASSWORD` | — | Password for the bootstrapped admin account |
 | `BODY_SIZE_LIMIT` | `64M` (set in Dockerfile) | Max request body — large plans and library restores need this |
 | `AUTH_RATE_LIMIT` | `20` per minute per IP | Login/register attempts cap; `0` disables |
+| `REGISTRATION_OPEN` | `true` | `false` closes public sign-ups |
 | `ORIGIN` | request origin | Set to your public URL when behind a reverse proxy (e.g. `https://plans.example.com`) |
+
+Admin console: set `ADMIN_USERNAME` + `ADMIN_PASSWORD`, start the server, then sign in — the account page links to **Manage users**, where you can set plans, grant bonus project slots, deactivate accounts (with a reason shown at their next sign-in), or promote other admins.
 
 Running without Docker: `npm run build` then `DATA_DIR=data PORT=3000 node build/index.js`.
 
